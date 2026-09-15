@@ -1,0 +1,11 @@
+customer_id,probability,risk_level,top_factors,recommended_action
+CUST007,0.6635918606592226,Critical,"['InternetService_Fiber optic', 'PaperlessBilling', 'HighRiskCombo']",Investigate fiber service quality or offer a fiber plan discount.
+CUST001,0.5791782952901962,High,"['InternetService_Fiber optic', 'PaperlessBilling', 'HighRiskCombo']",Investigate fiber service quality or offer a fiber plan discount.
+CUST004,0.4644203023274252,High,"['tenure', 'HighRiskCombo', 'PaperlessBilling']",Assign to early-tenure onboarding/retention outreach program.
+CUST010,0.1780345792721463,Low,"['tenure', 'TotalCharges', 'IsNewCustomer']",Assign to early-tenure onboarding/retention outreach program.
+CUST006,0.16748071076841095,Low,"['HighRiskCombo', 'PaperlessBilling', 'SeniorCitizen']",High-risk profile (month-to-month + electronic check) — prioritize proactive outreach.
+CUST005,0.1496126159500802,Low,"['InternetService_Fiber optic', 'PaperlessBilling', 'StreamingMovies_Yes']",Investigate fiber service quality or offer a fiber plan discount.
+CUST002,0.09972965353030842,Low,"['tenure', 'IsNewCustomer', 'TotalCharges']",Assign to early-tenure onboarding/retention outreach program.
+CUST008,0.09066629070664257,Low,"['InternetService_Fiber optic', 'AvgMonthlySpend', 'MonthlyCharges']",Investigate fiber service quality or offer a fiber plan discount.
+CUST009,0.06960347709910834,Low,"['PaperlessBilling', 'StreamingMovies_Yes', 'SeniorCitizen']",Offer a loyalty reward tied to billing preference.
+CUST003,0.058311809519409306,Low,"['InternetService_Fiber optic', 'PaperlessBilling', 'SeniorCitizen']",Investigate fiber service quality or offer a fiber plan discount.

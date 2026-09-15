@@ -1,0 +1,21 @@
+customer_id,probability,risk_level,top_factors,recommended_action
+CUST-006,0.7302604775080032,High,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-018,0.6632687656153528,High,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-005,0.6202639095872411,High,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-009,0.5333665556583792,Medium,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-019,0.5289935946573386,Medium,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-015,0.4875964231805039,Medium,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-001,0.41217445155996213,Medium,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-007,0.3746427852192488,Medium,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-013,0.2741565755641084,Medium,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-003,0.2293505746866522,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-011,0.16823612910890942,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-008,0.14429530832314283,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-014,0.07422619774632319,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-016,0.05798216624909608,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-012,0.053815187227859475,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-010,0.052192140847185715,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-002,0.0497429123747973,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-017,0.049564498475375494,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-004,0.048781994802621347,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST-020,0.03728230445352785,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.

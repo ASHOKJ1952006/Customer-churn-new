@@ -1,0 +1,48 @@
+feature,mutual_info
+ChargeIncrease,0.08572758647923662
+ChargeRatio,0.07971418992804269
+tenure,0.0778715336557303
+TenureSquared,0.06993699781512008
+HighRiskCombo,0.06931156215494871
+Contract_Two year,0.06639844385056204
+VeryHighRisk,0.05218699938842919
+InternetService_Fiber optic,0.04978291309201399
+MonthlyCharges,0.04624811925843608
+TotalCharges,0.04362547351946788
+IsLoyalCustomer,0.04361071038835074
+TenureGroup_49-72mo,0.04122294236705093
+PaymentMethod_Electronic check,0.03948506203676905
+NumServices,0.03829828774915889
+AvgMonthlySpend,0.0374841948329101
+IsNewCustomer,0.03626238466178955
+StreamingTV_No internet service,0.033498442513631765
+HasInternet,0.031268939234218474
+TechSupport_No internet service,0.030433546089416952
+InternetService_No,0.030209362582418242
+OnlineSecurity_No internet service,0.029129436719623536
+DeviceProtection_No internet service,0.028947678678007627
+AutoPayment,0.02893768762450155
+StreamingMovies_No internet service,0.02825818860379581
+OnlineBackup_No internet service,0.02280417124595724
+Contract_One year,0.021276805549207856
+PaperlessBilling,0.019697904678299905
+PaymentMethod_Credit card (automatic),0.01717279067449473
+OnlineSecurity_Yes,0.017127486081637056
+HighMonthlyCharges,0.0169910975533345
+TechSupport_Yes,0.013132380719810488
+Dependents,0.013076762518004603
+Partner,0.01164991488698952
+SeniorCitizen,0.006586531435267773
+gender,0.005607147333310136
+StreamingTV_Yes,0.0053789945173379206
+TenureGroup_25-48mo,0.004950232585392289
+PaymentMethod_Mailed check,0.004454633033998068
+StreamingMovies_Yes,0.0035713191140855916
+OnlineBackup_Yes,0.0031276031533002957
+MultipleLines_Yes,0.0016018273332718547
+HasPhone,0.0
+PhoneService,0.0
+MultipleLines_No phone service,0.0
+DeviceProtection_Yes,0.0
+TenureGroup_13-24mo,0.0
+TenureGroup_7-12mo,0.0

@@ -1,0 +1,26 @@
+LEARNING CURVE ANALYSIS - INTERPRETATION
+============================================================
+
+Results Table:
+ train_fraction  train_samples  accuracy  precision   recall       f1
+            0.1            563  0.758694   0.533333 0.727273 0.615385
+            0.2           1126  0.767921   0.549894 0.692513 0.613018
+            0.3           1690  0.750177   0.522541 0.681818 0.591647
+            0.4           2253  0.772179   0.554192 0.724599 0.628042
+            0.5           2817  0.753016   0.524621 0.740642 0.614191
+            0.6           3380  0.763662   0.541082 0.721925 0.618557
+            0.7           3943  0.763662   0.542268 0.703209 0.612340
+            0.8           4507  0.768630   0.547431 0.740642 0.629545
+            0.9           5070  0.759404   0.534517 0.724599 0.615210
+            1.0           5634  0.767921   0.546906 0.732620 0.626286
+
+Slope Analysis:
+F1 slope (last interval): 0.000020 per sample
+Recall slope (last interval): 0.000014 per sample
+F1 variance (last 3 points): 0.000038
+Recall variance (last 3 points): 0.000043
+
+F1 Curve: STILL RISING
+Recall Curve: STILL RISING
+
+FINAL VERDICT: The curve is STILL RISING - more data would likely help improve performance.
