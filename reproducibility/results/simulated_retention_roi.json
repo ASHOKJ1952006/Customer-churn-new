@@ -1,0 +1,11 @@
+{
+  "Test_Cohort_Size": 1600,
+  "Threshold": 0.26,
+  "Flagged_Subscribers": 832,
+  "True_Positive_Churners": 777,
+  "Intervention_Cost": 41600.0,
+  "Expected_Retained_Customers": 388.5,
+  "Gross_Value_Saved": 194250.0,
+  "Net_Simulated_Benefit": 152650.0,
+  "Simulated_ROI_Percentage": 366.94711538461536
+}

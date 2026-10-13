@@ -1,0 +1,14 @@
+{
+  "Cohort_Size": 1600,
+  "Flagged_Subscribers": 813,
+  "Flagged_Actual_Churners (TP)": 770,
+  "Flagged_False_Alarms (FP)": 43,
+  "Assumed_Contact_Cost": 50.0,
+  "Assumed_Retention_Success_Rate": 0.5,
+  "Assumed_CLV_Saved": 500.0,
+  "Total_Outreach_Cost": 40650.0,
+  "Expected_Retained_Customers": 385.0,
+  "Gross_Revenue_Saved": 192500.0,
+  "Net_Simulated_Benefit": 151850.0,
+  "Simulated_ROI_Percentage": 373.55473554735545
+}

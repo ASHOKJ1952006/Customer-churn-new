@@ -1,0 +1,7 @@
+{
+  "random_forest": 0.5,
+  "xgboost": 0.5,
+  "lightgbm": 0.5,
+  "stacking_ensemble": 0.5,
+  "stacking_ensemble_recall_prioritized": 0.29
+}

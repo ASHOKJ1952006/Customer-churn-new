@@ -14,7 +14,8 @@ CONTINUOUS_NUMERIC_COLS = [
     'tenure', 'MonthlyCharges', 'TotalCharges', 'AvgMonthlySpend',
     'MonthlyChargesPerTenure', 'TotalChargesPerTenure', 'ChargeToTenureRatio',
     'ChargeIncrease', 'ChargeIncreaseRatio', 'TotalChargesDifference',
-    'TenureSquared', 'TenureLog', 'NumServices', 'ContractLength'
+    'TenureSquared', 'TenureLog', 'NumServices', 'ContractLength',
+    'ServiceRiskCount', 'MultipleRiskFactors'
 ]
 
 # Baseline numerical features for Feature Set A
@@ -49,7 +50,7 @@ def clean_raw_telco_data(df_raw: pd.DataFrame) -> pd.DataFrame:
 def engineer_features(df_input: pd.DataFrame, feature_set: str = 'B') -> pd.DataFrame:
     """
     Generate engineered features for the Telco dataset.
-    feature_set: 'A' (original), 'B' (original + engineered), 'C' (B + interactions)
+    feature_set: 'A' (original), 'B' (original + domain engineered), 'C' (B + interactions)
     """
     df = df_input.copy()
     
@@ -91,6 +92,10 @@ def engineer_features(df_input: pd.DataFrame, feature_set: str = 'B') -> pd.Data
     df['ChargeIncrease'] = df['MonthlyCharges'] - df['AvgMonthlySpend']
     df['ChargeIncreaseRatio'] = df['MonthlyCharges'] / (df['AvgMonthlySpend'] + 1)
     df['TotalChargesDifference'] = df['TotalCharges'] - (df['MonthlyCharges'] * df['tenure'])
+    df['HighMonthlyCharge'] = (df['MonthlyCharges'] > 70).astype(int)
+    df['HighChargeAndMonthToMonth'] = ((df['MonthlyCharges'] > 70) & (df['Contract'] == 'Month-to-month')).astype(int)
+    df['HighChargesAndMonthToMonth'] = df['HighChargeAndMonthToMonth']
+    df['HighChargeAndShortTenure'] = ((df['MonthlyCharges'] > 70) & (df['tenure'] <= 12)).astype(int)
 
     # 3. Tenure features
     df['TenureSquared'] = df['tenure'] ** 2
@@ -100,12 +105,16 @@ def engineer_features(df_input: pd.DataFrame, feature_set: str = 'B') -> pd.Data
         labels=['0-6', '7-12', '13-24', '25-48', '49+']
     )
     df['IsNewCustomer'] = (df['tenure'] <= 3).astype(int)
+    df['IsShortTenure'] = (df['tenure'] <= 12).astype(int)
+    df['IsLongTenure'] = (df['tenure'] >= 48).astype(int)
     df['IsLoyalCustomer'] = (df['tenure'] >= 48).astype(int)
 
     # 4. Contract features
     contract_map = {'Month-to-month': 1, 'One year': 12, 'Two year': 24}
     df['ContractLength'] = df['Contract'].map(contract_map).fillna(1).astype(float)
     df['IsMonthToMonth'] = (df['Contract'] == 'Month-to-month').astype(int)
+    df['IsOneYearContract'] = (df['Contract'] == 'One year').astype(int)
+    df['IsTwoYearContract'] = (df['Contract'] == 'Two year').astype(int)
     df['IsLongTermContract'] = (df['Contract'] != 'Month-to-month').astype(int)
 
     # 5. Payment features
@@ -113,6 +122,12 @@ def engineer_features(df_input: pd.DataFrame, feature_set: str = 'B') -> pd.Data
     df['IsAutomaticPayment'] = df['PaymentMethod'].isin([
         'Bank transfer (automatic)', 'Credit card (automatic)'
     ]).astype(int)
+    df['ElectronicCheckAndMonthToMonth'] = (
+        (df['PaymentMethod'] == 'Electronic check') & (df['Contract'] == 'Month-to-month')
+    ).astype(int)
+    df['ElectronicCheckAndHighCharges'] = (
+        (df['PaymentMethod'] == 'Electronic check') & (df['MonthlyCharges'] > 70)
+    ).astype(int)
 
     # 6. Service combinations
     avail_service_cols = [c for c in SERVICE_COLS if c in df.columns]
@@ -123,15 +138,51 @@ def engineer_features(df_input: pd.DataFrame, feature_set: str = 'B') -> pd.Data
     else:
         df['NumServices'] = 0
 
+    if 'TechSupport' in df.columns:
+        df['NoTechSupport'] = (df['TechSupport'] == 'No').astype(int)
+    else:
+        df['NoTechSupport'] = 0
+
+    if 'OnlineSecurity' in df.columns:
+        df['NoOnlineSecurity'] = (df['OnlineSecurity'] == 'No').astype(int)
+    else:
+        df['NoOnlineSecurity'] = 0
+
+    df['ServiceRiskCount'] = (
+        (df['OnlineSecurity'] == 'No').astype(int) +
+        (df['TechSupport'] == 'No').astype(int) +
+        (df.get('OnlineBackup', 'No') == 'No').astype(int) +
+        (df.get('DeviceProtection', 'No') == 'No').astype(int)
+    )
+
     df['HasInternet'] = (df['InternetService'] != 'No').astype(int)
-    df['FiberAndMonthToMonth'] = ((df['InternetService'] == 'Fiber optic') & (df['Contract'] == 'Month-to-month')).astype(int)
-    df['FiberAndElectronicCheck'] = ((df['InternetService'] == 'Fiber optic') & (df['PaymentMethod'] == 'Electronic check')).astype(int)
-    df['MonthToMonthAndElectronicCheck'] = ((df['Contract'] == 'Month-to-month') & (df['PaymentMethod'] == 'Electronic check')).astype(int)
+    df['FiberOpticAndMonthToMonth'] = ((df['InternetService'] == 'Fiber optic') & (df['Contract'] == 'Month-to-month')).astype(int)
+    df['FiberOpticAndElectronicCheck'] = ((df['InternetService'] == 'Fiber optic') & (df['PaymentMethod'] == 'Electronic check')).astype(int)
+    df['FiberAndMonthToMonth'] = df['FiberOpticAndMonthToMonth']
+    df['FiberAndElectronicCheck'] = df['FiberOpticAndElectronicCheck']
+    df['MonthToMonthAndElectronicCheck'] = df['ElectronicCheckAndMonthToMonth']
     df['HighRiskCombo'] = df['MonthToMonthAndElectronicCheck']
     df['VeryHighRisk'] = ((df['MonthToMonthAndElectronicCheck'] == 1) & (df['tenure'] <= 12)).astype(int)
-    df['HighChargesAndMonthToMonth'] = ((df['MonthlyCharges'] > 70) & (df['Contract'] == 'Month-to-month')).astype(int)
 
-    # 7. Additional interaction terms for Feature Set C
+    # 7. Customer risk interactions
+    df['IsLongTermCustomer'] = df['IsLongTenure']
+    df['MonthToMonth_ElectronicCheck'] = df['ElectronicCheckAndMonthToMonth']
+    df['MonthToMonth_HighCharges'] = df['HighChargeAndMonthToMonth']
+    df['MonthToMonthAndHighCharges'] = df['HighChargeAndMonthToMonth']
+    df['MonthToMonth_ShortTenure'] = ((df['Contract'] == 'Month-to-month') & (df['tenure'] <= 12)).astype(int)
+    df['MonthToMonthAndShortTenure'] = df['MonthToMonth_ShortTenure']
+    df['ShortTenure_HighCharges'] = df['HighChargeAndShortTenure']
+    df['ShortTenureAndHighCharges'] = df['ShortTenure_HighCharges']
+    df['ShortTenure_ElectronicCheck'] = ((df['tenure'] <= 12) & (df['PaymentMethod'] == 'Electronic check')).astype(int)
+    df['ShortTenureAndElectronicCheck'] = df['ShortTenure_ElectronicCheck']
+    df['MultipleRiskFactors'] = (
+        (df['Contract'] == 'Month-to-month').astype(int) +
+        (df['PaymentMethod'] == 'Electronic check').astype(int) +
+        (df['InternetService'] == 'Fiber optic').astype(int) +
+        (df['tenure'] <= 12).astype(int)
+    )
+
+    # 8. Additional interaction terms for Feature Set C
     if feature_set == 'C':
         df['Tenure_x_MonthlyCharges'] = df['tenure'] * df['MonthlyCharges']
         df['NumServices_x_MonthlyCharges'] = df['NumServices'] * df['MonthlyCharges']
@@ -154,24 +205,28 @@ def build_single_customer_vector(
     Construct model-ready feature vector for single customer prediction.
     Accepts 6 core UI inputs + optional extended profile parameters.
     """
-    tenure = float(inputs.get('tenure', 0))
-    monthly_charges = float(inputs.get('monthly_charges', 0))
-    total_charges = float(inputs.get('total_charges', 0))
-    contract = inputs.get('contract', 'Month-to-month')
-    payment_method = inputs.get('payment_method', 'Electronic check')
-    internet_service = inputs.get('internet_service', 'Fiber optic')
+    tenure = float(inputs.get('tenure', inputs.get('Tenure', 0)))
+    monthly_charges = float(inputs.get('monthly_charges', inputs.get('MonthlyCharges', 0)))
+    total_charges = float(inputs.get('total_charges', inputs.get('TotalCharges', 0)))
+    if total_charges == 0 and tenure > 0 and monthly_charges > 0:
+        total_charges = round(tenure * monthly_charges, 2)
+
+    contract = inputs.get('contract', inputs.get('Contract', 'Month-to-month'))
+    payment_method = inputs.get('payment_method', inputs.get('PaymentMethod', 'Electronic check'))
+    internet_service = inputs.get('internet_service', inputs.get('InternetService', 'Fiber optic'))
 
     # Optional fields with sane defaults
-    gender = inputs.get('gender', 'Female')
+    gender = inputs.get('gender', inputs.get('Gender', 'Female'))
     senior_val = inputs.get('senior_citizen', inputs.get('SeniorCitizen', 0))
     if isinstance(senior_val, str):
         senior = 1 if senior_val.lower() in ('yes', '1', 'true') else 0
     else:
         senior = int(senior_val) if senior_val else 0
-    partner = inputs.get('partner', 'No')
-    dependents = inputs.get('dependents', 'No')
-    phone = inputs.get('phone_service', 'Yes')
-    paperless = inputs.get('paperless_billing', 'Yes')
+
+    partner = inputs.get('partner', inputs.get('Partner', 'No'))
+    dependents = inputs.get('dependents', inputs.get('Dependents', 'No'))
+    phone = inputs.get('phone_service', inputs.get('PhoneService', 'Yes'))
+    paperless = inputs.get('paperless_billing', inputs.get('PaperlessBilling', 'Yes'))
 
     raw_dict = {
         'gender': gender,
@@ -186,13 +241,13 @@ def build_single_customer_vector(
         'Contract': contract,
         'PaymentMethod': payment_method,
         'InternetService': internet_service,
-        'MultipleLines': inputs.get('multiple_lines', 'No'),
-        'OnlineSecurity': inputs.get('online_security', 'No'),
-        'OnlineBackup': inputs.get('online_backup', 'No'),
-        'DeviceProtection': inputs.get('device_protection', 'No'),
-        'TechSupport': inputs.get('tech_support', 'No'),
-        'StreamingTV': inputs.get('streaming_tv', 'No'),
-        'StreamingMovies': inputs.get('streaming_movies', 'No')
+        'MultipleLines': inputs.get('multiple_lines', inputs.get('MultipleLines', 'No')),
+        'OnlineSecurity': inputs.get('online_security', inputs.get('OnlineSecurity', 'No')),
+        'OnlineBackup': inputs.get('online_backup', inputs.get('OnlineBackup', 'No')),
+        'DeviceProtection': inputs.get('device_protection', inputs.get('DeviceProtection', 'No')),
+        'TechSupport': inputs.get('tech_support', inputs.get('TechSupport', 'No')),
+        'StreamingTV': inputs.get('streaming_tv', inputs.get('StreamingTV', 'No')),
+        'StreamingMovies': inputs.get('streaming_movies', inputs.get('StreamingMovies', 'No'))
     }
 
     df_single = pd.DataFrame([raw_dict])

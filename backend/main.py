@@ -19,8 +19,16 @@ from datetime import datetime
 from database import ChurnDatabase
 import sys
 import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scripts')))
+from scripts.stacking_model import StackingEnsemble
+import scripts.stacking_model as stacking_model
+sys.modules['stacking_model'] = stacking_model
+from stacking_model_v2 import ChurnV2StackingEnsemble
+import stacking_model_v2
+sys.modules['stacking_model_v2'] = stacking_model_v2
+from feature_engineering_v2 import build_single_vector_v2, engineer_features_v2, get_churn_v2_feature_names
 from shap_explainer import SHAPToTextExplainer
 from shap_service import robust_explainer, combine_shap_and_lime
 from lime_service import lime_service
@@ -60,16 +68,20 @@ def load_model_file(filename: str):
             return joblib.load(p)
     raise FileNotFoundError(f"Could not locate model file {filename} in candidate paths: {candidate_paths}")
 
-# --- Load Dataset 1 models (Telco, Calibrated CV) ---
-ds1_model = load_model_file('ds1calcv_churn_model.pkl')
-ds1_scaler = load_model_file('ds1calcv_scaler.pkl')
-ds1_feature_columns = load_model_file('ds1calcv_feature_columns.pkl')
-ds1_best_threshold = load_model_file('ds1calcv_best_threshold.pkl')
+# --- Load Dataset 1 models (churn_v2 Stacking Ensemble Production Model) ---
 try:
-    ds1_explainer = load_model_file('ds1calcv_shap_explainer.pkl')
+    ds1_model = load_model_file('churn_v2_model.pkl')
+    ds1_scaler = load_model_file('churn_v2_scaler.pkl')
+    ds1_feature_columns = load_model_file('churn_v2_feature_columns.pkl')
+    ds1_best_threshold = float(load_model_file('churn_v2_best_threshold.pkl'))
+    logger.info("Successfully loaded churn_v2 model artifacts.")
 except Exception as e:
-    logger.warning(f"Could not load ds1calcv_shap_explainer.pkl: {e}. Fallback explainer will be used.")
-    ds1_explainer = None
+    logger.warning(f"Could not load churn_v2 ({e}), falling back to ds1calcv.")
+    ds1_model = load_model_file('ds1calcv_churn_model.pkl')
+    ds1_scaler = load_model_file('ds1calcv_scaler.pkl')
+    ds1_feature_columns = load_model_file('ds1calcv_feature_columns.pkl')
+    ds1_best_threshold = load_model_file('ds1calcv_best_threshold.pkl')
+ds1_explainer = None
 
 # --- Load Dataset 2 models (Telecom, Optimized) ---
 ds2_model = load_model_file('ds2optuna_churn_model.pkl')
@@ -167,8 +179,8 @@ def risk_label(prob):
 def build_feature_vector(inputs):
     """Build feature vector from inputs using consistent feature_engineering module."""
     if current_dataset == "ds1":
-        scale_cols = [c for c in CONTINUOUS_NUMERIC_COLS if c in feature_columns]
-        return build_single_customer_vector(inputs, feature_columns, scaler, scale_cols)
+        scale_cols, _ = get_churn_v2_feature_names()
+        return build_single_vector_v2(inputs, scaler, feature_columns, scale_cols)
     else:
         # Dataset 2 feature building (simplified for demo)
         raw = {}
@@ -242,17 +254,18 @@ def preprocess_raw_dataframe(raw_df):
     # Handle missing values
     df = df.fillna(0)
     
-    # For Dataset 1, apply similar encoding as build_feature_vector
+    # For Dataset 1, apply churn_v2 feature engineering
     if current_dataset == "ds1":
         customer_ids = df.get('customerID', [f"cust_{i}" for i in range(len(df))]).tolist()
-        df_encoded = engineer_features(df, feature_set='B')
+        df_encoded = engineer_features_v2(df)
         for col in feature_columns:
             if col not in df_encoded.columns:
                 df_encoded[col] = 0.0
         df_encoded = df_encoded[feature_columns].astype(float)
-        scale_cols = [c for c in CONTINUOUS_NUMERIC_COLS if c in df_encoded.columns]
-        if hasattr(scaler, 'transform') and scale_cols:
-            df_encoded[scale_cols] = scaler.transform(df_encoded[scale_cols])
+        scale_cols, _ = get_churn_v2_feature_names()
+        valid_scale_cols = [c for c in scale_cols if c in df_encoded.columns]
+        if hasattr(scaler, 'transform') and valid_scale_cols:
+            df_encoded[valid_scale_cols] = scaler.transform(df_encoded[valid_scale_cols])
         return df_encoded, customer_ids
     else:
         # Dataset 2 preprocessing (simplified)
@@ -768,9 +781,9 @@ _FALLBACK_COMPARISON = {
         },
         {
             "name": "Stacked Ensemble", "short": "Ensemble", "color": "#7c3aed", "type": "ensemble",
-            "description": "RF + XGBoost + LightGBM stacked via high-capacity meta-learner with out-of-fold calibration.",
-            "accuracy": 0.9142, "precision": 0.8920, "recall": 0.8850, "f1": 0.8885,
-            "roc_auc": 0.9260, "brier": 0.0680, "threshold": 0.5000, "training_time_sec": 15.4
+            "description": "RF + XGBoost + LightGBM stacked via Logistic Regression meta-learner with out-of-fold calibration.",
+            "accuracy": 0.7984, "precision": 0.6380, "recall": 0.5561, "f1": 0.5943,
+            "roc_auc": 0.8449, "brier": 0.1369, "threshold": 0.5000, "training_time_sec": 15.4
         }
     ],
     "metric_keys": ["accuracy", "precision", "recall", "f1", "roc_auc", "brier"],

@@ -1,10 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Tooltip from '../components/Tooltip';
 import '../styles/theme.css';
 
+const API_URL = 'http://localhost:8000';
+
 const Landing = () => {
   const navigate = useNavigate();
+  const [modelStats, setModelStats] = useState({
+    recall: '69.8%',
+    accuracy: '78.4%',
+    f1: '0.632',
+    brier: '0.137'
+  });
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/model-comparison`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.models) {
+          const deployed = data.models.find(m => m.is_deployed) || data.models.find(m => m.type === 'ensemble') || data.models[0];
+          if (deployed) {
+            setModelStats({
+              recall: `${(deployed.recall * 100).toFixed(1)}%`,
+              accuracy: `${(deployed.accuracy * 100).toFixed(1)}%`,
+              f1: deployed.f1.toFixed(3),
+              brier: deployed.brier.toFixed(3)
+            });
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const navCards = [
     {
@@ -44,28 +71,27 @@ const Landing = () => {
     }
   ];
 
-
   const stats = [
     { 
-      value: '81.0%', 
+      value: modelStats.recall, 
       label: 'Recall', 
       icon: '🎯',
       tooltip: 'Of all customers who actually churn, this is the percentage the model successfully catches. We prioritize this over raw accuracy, since missing a real churner is more costly than a false alarm.'
     },
     { 
-      value: '75.0%', 
+      value: modelStats.accuracy, 
       label: 'Accuracy', 
       icon: '✓',
       tooltip: 'The percentage of all predictions (churn and no-churn) the model gets right. Can be misleading on its own when churn is rare, which is why we report it alongside recall.'
     },
     { 
-      value: '0.633', 
+      value: modelStats.f1, 
       label: 'F1 Score', 
       icon: '⚡',
       tooltip: 'A single number balancing precision (avoiding false alarms) and recall (catching real churners). Higher is better, max is 1.0.'
     },
     { 
-      value: '0.137', 
+      value: modelStats.brier, 
       label: 'Brier Score', 
       icon: '📏',
       tooltip: 'Measures how trustworthy the model\'s probability numbers are — lower is better. A well-calibrated model\'s "70% risk" predictions really do churn about 70% of the time.'

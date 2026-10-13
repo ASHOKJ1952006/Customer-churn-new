@@ -18,6 +18,14 @@ import shutil
 import warnings
 warnings.filterwarnings('ignore')
 
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
@@ -36,6 +44,7 @@ from sklearn.model_selection import train_test_split
 from feature_engineering import (
     clean_raw_telco_data, engineer_features, CONTINUOUS_NUMERIC_COLS
 )
+from stacking_model import StackingEnsemble
 
 SEED = 42
 
@@ -142,15 +151,6 @@ for cfg in models_config:
         t0 = time.time()
         metrics = eval_model(m, X_test, y_test, threshold=0.50)
         metrics['training_time_sec'] = round(time.time() - t0, 3)
-
-        if cfg['name'] == 'Stacked Ensemble':
-            metrics['accuracy'] = 0.9142
-            metrics['precision'] = 0.8920
-            metrics['recall'] = 0.8850
-            metrics['f1'] = 0.8885
-            metrics['roc_auc'] = 0.9260
-            metrics['pr_auc'] = 0.8950
-            metrics['brier'] = 0.0680
     else:
         print(f"Warning: {cfg['file']} not found. Please run train_optimized_models.py first.")
         continue

@@ -1,0 +1,112 @@
+[
+  {
+    "Case": "Customer A",
+    "Profile": "High-risk, uncommitted subscriber with severe churn indicators",
+    "Tenure": 4,
+    "Contract": "Month-to-month",
+    "PaymentMethod": "Electronic check",
+    "MonthlyCharges": 101.14,
+    "Predicted_Churn_Prob": 0.9789001276383963,
+    "Decision_Threshold": 0.26000000000000006,
+    "Predicted_Class": "Churn (High Risk)",
+    "Top_SHAP_Drivers": [
+      {
+        "feature": "tenure",
+        "shap_value": 1.9602449860831257,
+        "direction": "increases_churn",
+        "impact": "Risk Factor (+)"
+      },
+      {
+        "feature": "MonthlyCharges",
+        "shap_value": 1.05508710236114,
+        "direction": "increases_churn",
+        "impact": "Risk Factor (+)"
+      },
+      {
+        "feature": "MonthlyCharges_x_IsMonthToMonth",
+        "shap_value": 0.7807815977639985,
+        "direction": "increases_churn",
+        "impact": "Risk Factor (+)"
+      }
+    ],
+    "Top_LIME_Drivers": [
+      {
+        "rule": "tenure <= -0.92",
+        "feature": "tenure",
+        "weight": 0.319500102889176,
+        "direction": "increases_churn"
+      },
+      {
+        "rule": "Contract_Two year <= 0.00",
+        "feature": "Contract_Two year",
+        "weight": 0.17928830860783299,
+        "direction": "increases_churn"
+      },
+      {
+        "rule": "MonthlyCharges > 0.80",
+        "feature": "MonthlyCharges",
+        "weight": 0.10817401282576421,
+        "direction": "increases_churn"
+      }
+    ],
+    "Recommended_Action": "Early Lifecycle Onboarding & Care Outreach",
+    "Action_Description": "Enroll customer into the VIP Early-Tenure Onboarding program with a dedicated care check-in call and welcome service verification.",
+    "Priority": "CRITICAL",
+    "Pruning_Check": "Passed (No redundant actions recommended)"
+  },
+  {
+    "Case": "Customer B",
+    "Profile": "Loyal, mature multi-year subscriber with low defection probability",
+    "Tenure": 40,
+    "Contract": "Two year",
+    "PaymentMethod": "Credit card (automatic)",
+    "MonthlyCharges": 90.53,
+    "Predicted_Churn_Prob": 0.18332564329465287,
+    "Decision_Threshold": 0.26000000000000006,
+    "Predicted_Class": "Loyal (Low Risk)",
+    "Top_SHAP_Drivers": [
+      {
+        "feature": "tenure",
+        "shap_value": -0.948092129927245,
+        "direction": "decreases_churn",
+        "impact": "Protective (-)"
+      },
+      {
+        "feature": "MonthlyCharges",
+        "shap_value": 0.9327858953399119,
+        "direction": "increases_churn",
+        "impact": "Risk Factor (+)"
+      },
+      {
+        "feature": "Contract_Two year",
+        "shap_value": -0.849538148479769,
+        "direction": "decreases_churn",
+        "impact": "Protective (-)"
+      }
+    ],
+    "Top_LIME_Drivers": [
+      {
+        "rule": "0.00 < Contract_Two year <= 1.00",
+        "feature": "Contract_Two year",
+        "weight": -0.17188692166893735,
+        "direction": "decreases_churn"
+      },
+      {
+        "rule": "-0.83 < ChargeIncreaseRatio <= -0.09",
+        "feature": "ChargeIncrease",
+        "weight": 0.16150004654455827,
+        "direction": "increases_churn"
+      },
+      {
+        "rule": "-0.23 < tenure <= 0.78",
+        "feature": "tenure",
+        "weight": -0.14393587987832615,
+        "direction": "decreases_churn"
+      }
+    ],
+    "Recommended_Action": "Account Plan & Rate Optimization Review",
+    "Action_Description": "Conduct a comprehensive tariff review to right-size unused features or migrate the customer to a high-value bundled package saving $15\u2013$20/mo.",
+    "Priority": "LOW",
+    "Pruning_Check": "Passed (No redundant actions recommended)"
+  }
+]

@@ -1,0 +1,17 @@
+% Auto-generated Phase 4 SHAP vs. LIME Concordance Evaluation Table
+% Dataset: balanced_telco_churn.csv ONLY (N = 200 hold-out test subscribers)
+\begin{table}[htbp]
+\centering
+\caption{Quantitative Concordance Between Global SHAP (Kernel/Tree Surrogate) and Local LIME Explanations Across $N=200$ Test Customers}
+\label{tab:shap_lime_concordance}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Metric} & \textbf{Mean} & \textbf{Std Dev} & \textbf{Median} & \textbf{Interpretation} \\
+\hline
+Spearman Rank Correlation ($\rho$) & 0.2421 & 0.1091 & 0.2444 & Weak-to-moderate feature ranking alignment \\
+Top-3 Feature Set Overlap & 22.83\% & 22.00\% & 33.33\% & Partial concordance in primary drivers \\
+Top-5 Feature Set Overlap & 38.80\% & 13.80% & 40.00\% & Substantial divergence in secondary risk drivers \\
+\hline
+\multicolumn{5}{p{0.95\columnwidth}}{\footnotesize \textit{Note:} Concordance computed across $N=200$ test customer instances using identical 27-dimensional feature representations. Kernel sampling and local linear surrogate perturbations explain the divergence.}
+\end{tabular}
+\end{table}

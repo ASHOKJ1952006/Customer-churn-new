@@ -1,0 +1,11 @@
+customer_id,probability,risk_level,top_factors,recommended_action
+CUST001,0.9737191252674904,Critical,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST002,0.8666181183406352,Critical,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST003,0.030891472593686575,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST004,0.9756119881820209,Critical,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST005,0.08009067422221165,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST006,0.6814560529433212,High,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST007,0.9787292254864262,Critical,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST008,0.08225756077332,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST009,0.02758347305395458,Low,['SHAP unavailable'],Review customer profile for a tailored retention offer.
+CUST010,0.9647878542775712,Critical,['SHAP unavailable'],Review customer profile for a tailored retention offer.

@@ -1,0 +1,28 @@
+Rank,Feature,Mean_Absolute_SHAP
+1,tenure,1.4538673827909232
+2,ChargeIncreaseRatio,1.0794725877870015
+3,MonthlyCharges,0.6410421538247891
+4,InternetService_Fiber optic,0.5199137198738758
+5,MonthlyCharges_x_IsMonthToMonth,0.487950385109827
+6,AverageMonthlySpend,0.47693371733290596
+7,Contract_Two year,0.4241798554091868
+8,HighRiskCombo,0.33450726029826183
+9,TenureSquared,0.2916582718311827
+10,IsElectronicCheck,0.2640230331343973
+11,PaymentMethod_Credit card (automatic),0.16719110186626873
+12,tenure_x_IsMonthToMonth,0.12903170974478712
+13,ChargeIncrease,0.12729840773452314
+14,TenureLog,0.12546179234651705
+15,tenure_x_MonthlyCharges,0.10348775109527335
+16,TotalCharges,0.10122658515065398
+17,PaymentMethod_Mailed check,0.09510290606837483
+18,Contract_One year,0.06506894277040934
+19,FiberOptic_x_MonthToMonth,0.05009731815640322
+20,PaymentMethod_Electronic check,0.0496023673727177
+21,InternetService_No,0.026334201465191952
+22,IsNewCustomer,0.01668709189640756
+23,VeryHighRisk,0.014311685447393372
+24,FiberOptic_x_ElectronicCheck,0.006180268427814081
+25,IsMonthToMonth,0.0
+26,IsLongTermCustomer,0.0
+27,IsLongTermContract,0.0

@@ -312,6 +312,27 @@ class RobustSHAPExplainer:
                         sub_estimator = base
                         sub_est_name = f"Fold-0 {type(base).__name__}"
 
+                if sub_estimator is None and hasattr(model, 'named_estimators_'):
+                    if 'lgbm' in model.named_estimators_:
+                        sub_estimator = model.named_estimators_['lgbm']
+                        sub_est_name = "Stacking LightGBM Base Model"
+                    elif 'rf' in model.named_estimators_:
+                        sub_estimator = model.named_estimators_['rf']
+                        sub_est_name = "Stacking Random Forest Base Model"
+                    elif 'xgb' in model.named_estimators_:
+                        sub_estimator = model.named_estimators_['xgb']
+                        sub_est_name = "Stacking XGBoost Base Model"
+
+                if sub_estimator is None and hasattr(model, 'xgb'):
+                    sub_estimator = model.xgb
+                    sub_est_name = "ChurnV2 XGBoost Base Model"
+                elif sub_estimator is None and hasattr(model, 'lgbm'):
+                    sub_estimator = model.lgbm
+                    sub_est_name = "ChurnV2 LightGBM Base Model"
+                elif sub_estimator is None and hasattr(model, 'rf'):
+                    sub_estimator = model.rf
+                    sub_est_name = "ChurnV2 Random Forest Base Model"
+
                 if sub_estimator is not None:
                     tree_exp = shap.TreeExplainer(sub_estimator)
                     res = tree_exp.shap_values(input_df)

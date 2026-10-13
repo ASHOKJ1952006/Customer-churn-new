@@ -1,127 +1,146 @@
 {
+  "model_version": "churn_v2",
+  "deployed_model": "Stacking Ensemble",
+  "dataset": "IBM Telco Customer Churn (Balanced 50/50 Split)",
+  "test_records": 1600,
   "models": [
     {
       "name": "Random Forest",
       "short": "RF",
-      "color": "#2563eb",
       "type": "individual",
-      "description": "Bagged decision trees with regularized tree depth and leaf samples.",
-      "accuracy": 0.7707594038325053,
-      "precision": 0.5499021526418787,
-      "recall": 0.7513368983957219,
-      "f1": 0.6350282485875707,
-      "roc_auc": 0.8442390658503192,
-      "pr_auc": 0.6505778238351639,
-      "brier": 0.15367273700223488,
-      "threshold": 0.5,
+      "color": "#2563eb",
+      "is_deployed": false,
+      "description": "Balanced Bagging Trees with max_depth=12.",
+      "accuracy": 0.95375,
+      "precision": 0.9459459459459459,
+      "recall": 0.9625,
+      "f1": 0.9541511771995044,
+      "roc_auc": 0.986871875,
+      "pr_auc": 0.9831214911972155,
+      "brier": 0.036941363398045574,
+      "threshold": 0.38000000000000006,
       "confusion_matrix": [
         [
-          805,
-          230
+          756,
+          44
         ],
         [
-          93,
-          281
+          30,
+          770
         ]
-      ]
+      ],
+      "tn": 756,
+      "fp": 44,
+      "fn": 30,
+      "tp": 770
     },
     {
       "name": "XGBoost",
       "short": "XGB",
-      "color": "#d97706",
       "type": "individual",
-      "description": "Histogram-based gradient boosting with L1/L2 regularization.",
-      "accuracy": 0.7856635911994322,
-      "precision": 0.5913705583756346,
-      "recall": 0.6229946524064172,
-      "f1": 0.6067708333333334,
-      "roc_auc": 0.843329716603374,
-      "pr_auc": 0.6602494645014767,
-      "brier": 0.14119388163089752,
-      "threshold": 0.5,
+      "color": "#d97706",
+      "is_deployed": false,
+      "description": "Gradient Boosting with L1/L2 regularization and tree subsampling.",
+      "accuracy": 0.94875,
+      "precision": 0.9253554502369669,
+      "recall": 0.97625,
+      "f1": 0.9501216545012166,
+      "roc_auc": 0.9900625000000001,
+      "pr_auc": 0.9889893266549511,
+      "brier": 0.034702133387327194,
+      "threshold": 0.29000000000000004,
       "confusion_matrix": [
         [
-          874,
-          161
+          737,
+          63
         ],
         [
-          141,
-          233
+          19,
+          781
         ]
-      ]
+      ],
+      "tn": 737,
+      "fp": 63,
+      "fn": 19,
+      "tp": 781
     },
     {
       "name": "LightGBM",
       "short": "LGBM",
-      "color": "#059669",
       "type": "individual",
-      "description": "Leaf-wise gradient boosting with max leaves constraint.",
-      "accuracy": 0.7821149751596878,
-      "precision": 0.5856777493606138,
-      "recall": 0.6122994652406417,
-      "f1": 0.5986928104575163,
-      "roc_auc": 0.8412035960629313,
-      "pr_auc": 0.6596556398079007,
-      "brier": 0.14114839789809286,
-      "threshold": 0.5,
+      "color": "#059669",
+      "is_deployed": false,
+      "description": "Leaf-wise Gradient Boosting with depth constraints.",
+      "accuracy": 0.95,
+      "precision": 0.9337349397590361,
+      "recall": 0.96875,
+      "f1": 0.950920245398773,
+      "roc_auc": 0.9894578125000001,
+      "pr_auc": 0.9882097309893262,
+      "brier": 0.03529841845946926,
+      "threshold": 0.32000000000000006,
       "confusion_matrix": [
         [
-          873,
-          162
+          745,
+          55
         ],
         [
-          145,
-          229
+          25,
+          775
         ]
-      ]
+      ],
+      "tn": 745,
+      "fp": 55,
+      "fn": 25,
+      "tp": 775
     },
     {
-      "name": "Stacked Ensemble",
+      "name": "Stacking Ensemble",
       "short": "Ensemble",
-      "color": "#7c3aed",
       "type": "ensemble",
-      "description": "Random Forest + XGBoost + LightGBM stacked via Logistic Regression meta learner.",
-      "accuracy": 0.7984386089425124,
-      "precision": 0.6380368098159509,
-      "recall": 0.5561497326203209,
-      "f1": 0.5942857142857143,
-      "roc_auc": 0.8448694102146788,
-      "pr_auc": 0.6541745547615139,
-      "brier": 0.13685915052634776,
-      "threshold": 0.5,
+      "color": "#7c3aed",
+      "is_deployed": true,
+      "description": "Stacking (RF + XGB + LGBM) via Logistic Regression meta-learner with calibrated threshold.",
+      "accuracy": 0.954375,
+      "precision": 0.947109471094711,
+      "recall": 0.9625,
+      "f1": 0.9547427154370738,
+      "roc_auc": 0.9894171875,
+      "pr_auc": 0.9879737146127398,
+      "brier": 0.036164489959368294,
+      "threshold": 0.26000000000000006,
       "confusion_matrix": [
         [
-          917,
-          118
+          757,
+          43
         ],
         [
-          166,
-          208
+          30,
+          770
         ]
-      ]
+      ],
+      "tn": 757,
+      "fp": 43,
+      "fn": 30,
+      "tp": 770
     }
   ],
   "metric_keys": [
     "accuracy",
-    "recall",
     "precision",
+    "recall",
     "f1",
     "roc_auc",
-    "pr_auc",
     "brier"
   ],
   "metric_labels": {
     "accuracy": "Accuracy",
-    "recall": "Recall",
     "precision": "Precision",
+    "recall": "Recall",
     "f1": "F1 Score",
     "roc_auc": "ROC-AUC",
-    "pr_auc": "PR-AUC",
     "brier": "Brier Score"
   },
-  "generated_at": "2026-09-15T12:19:28.099594",
-  "model_version": "v2.0-stacked",
-  "dataset": "Dataset 1 \u2014 Telco Customer Churn (IBM)",
-  "feature_count": 58,
+  "generated_at": "2026-09-22T12:01:57.441526",
   "is_fallback": false
 }

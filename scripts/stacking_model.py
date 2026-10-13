@@ -50,9 +50,9 @@ class StackingEnsemble:
         self.feature_names = feature_names if feature_names else []
         self.classes_ = np.array([0, 1])
         self.estimators_ = [
-            ('rf', self.rf_model),
-            ('xgb', self.xgb_model),
-            ('lgbm', self.lgbm_model),
+            self.rf_model,
+            self.xgb_model,
+            self.lgbm_model,
         ]
         self.named_estimators_ = {
             'rf': self.rf_model,
@@ -95,6 +95,19 @@ class StackingEnsemble:
     def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
         probs = self.predict_proba(X)[:, 1]
         return (probs >= self.threshold).astype(int)
+
+    def decision_function(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+        meta_X = self._construct_meta_features(X)
+        if hasattr(self.meta_learner, 'decision_function'):
+            return self.meta_learner.decision_function(meta_X)
+        probs = self.predict_proba(X)[:, 1]
+        eps = 1e-7
+        probs = np.clip(probs, eps, 1 - eps)
+        return np.log(probs / (1 - probs))
+
+    def score(self, X: Union[np.ndarray, pd.DataFrame], y: np.ndarray) -> float:
+        from sklearn.metrics import accuracy_score
+        return float(accuracy_score(y, self.predict(X)))
 
     def set_threshold(self, threshold: float):
         self.threshold = float(threshold)

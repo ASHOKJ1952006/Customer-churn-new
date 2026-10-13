@@ -1,0 +1,70 @@
+{
+  "input_fields": [
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "Contract",
+    "InternetService",
+    "PaymentMethod"
+  ],
+  "scale_columns": [
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "AverageMonthlySpend",
+    "ChargeIncrease",
+    "ChargeIncreaseRatio",
+    "TenureSquared",
+    "TenureLog",
+    "tenure_x_MonthlyCharges",
+    "tenure_x_IsMonthToMonth",
+    "MonthlyCharges_x_IsMonthToMonth"
+  ],
+  "all_feature_columns": [
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "AverageMonthlySpend",
+    "ChargeIncrease",
+    "ChargeIncreaseRatio",
+    "TenureSquared",
+    "TenureLog",
+    "tenure_x_MonthlyCharges",
+    "tenure_x_IsMonthToMonth",
+    "MonthlyCharges_x_IsMonthToMonth",
+    "IsNewCustomer",
+    "IsLongTermCustomer",
+    "IsMonthToMonth",
+    "IsLongTermContract",
+    "IsElectronicCheck",
+    "HighRiskCombo",
+    "VeryHighRisk",
+    "FiberOptic_x_MonthToMonth",
+    "FiberOptic_x_ElectronicCheck",
+    "Contract_One year",
+    "Contract_Two year",
+    "InternetService_Fiber optic",
+    "InternetService_No",
+    "PaymentMethod_Credit card (automatic)",
+    "PaymentMethod_Electronic check",
+    "PaymentMethod_Mailed check"
+  ],
+  "categorical_mappings": {
+    "Contract": [
+      "Month-to-month",
+      "One year",
+      "Two year"
+    ],
+    "InternetService": [
+      "DSL",
+      "Fiber optic",
+      "No"
+    ],
+    "PaymentMethod": [
+      "Bank transfer (automatic)",
+      "Credit card (automatic)",
+      "Electronic check",
+      "Mailed check"
+    ]
+  }
+}

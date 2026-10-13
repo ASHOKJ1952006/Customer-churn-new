@@ -1,0 +1,28 @@
+Feature,Mean_Absolute_SHAP
+tenure,2.794922
+MonthlyCharges_x_IsMonthToMonth,0.58214796
+ChargeIncreaseRatio,0.5702501
+MonthlyCharges,0.55968755
+Contract_Two year,0.45478252
+AverageMonthlySpend,0.36302933
+InternetService_Fiber optic,0.29294142
+IsElectronicCheck,0.27706677
+PaymentMethod_Credit card (automatic),0.2345725
+ChargeIncrease,0.11831031
+tenure_x_MonthlyCharges,0.11558805
+tenure_x_IsMonthToMonth,0.11528278
+PaymentMethod_Mailed check,0.09841724
+Contract_One year,0.08464549
+TotalCharges,0.076326
+InternetService_No,0.04303206
+IsMonthToMonth,0.033022035
+FiberOptic_x_MonthToMonth,0.016923545
+FiberOptic_x_ElectronicCheck,0.006860345
+HighRiskCombo,0.0023772873
+IsLongTermContract,0.0
+TenureLog,0.0
+TenureSquared,0.0
+IsLongTermCustomer,0.0
+IsNewCustomer,0.0
+VeryHighRisk,0.0
+PaymentMethod_Electronic check,0.0

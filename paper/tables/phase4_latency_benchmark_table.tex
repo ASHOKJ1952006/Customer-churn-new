@@ -1,0 +1,18 @@
+% Auto-generated Phase 4 Latency Benchmark Table
+% Platform: Intel64 Family 6 Model 126 Stepping 5, Windows 10, Python 3.11.9
+\begin{table}[htbp]
+\centering
+\caption{Measured End-to-End Inference and Explainability Latency Benchmarks}
+\label{tab:latency_benchmark}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Pipeline Operation} & \textbf{Batch Size} & \textbf{Iterations} & \textbf{Mean Latency (ms)} & \textbf{P95 Latency (ms)} \\
+\hline
+Single-Customer Prediction & 1 & 1,000 & 100.15 & 115.21 \\
+Batch Customer Prediction & 100 & 1,000 & 124.41 & 167.30 \\
+Local SHAP Explanation & 1 & 200 & 6.26 & 8.59 \\
+Local LIME Explanation & 1 & 100 & 620.21 & 777.76 \\
+\hline
+\multicolumn{5}{p{0.95\columnwidth}}{\footnotesize \textit{Note:} End-to-end prediction includes raw pandas input ingestion, 27-feature engineering, standard scaling, base-estimator inference (RF, XGB, LGBM, CatBoost), and meta-logistic regression. Measured on local CPU hardware without GPU acceleration.}
+\end{tabular}
+\end{table}

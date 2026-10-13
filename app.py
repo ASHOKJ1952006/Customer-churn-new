@@ -34,7 +34,7 @@ ds2_explainer = joblib.load('models/ds2optuna_shap_explainer.pkl')
 st.sidebar.title("📊 Dataset Selection")
 dataset_choice = st.sidebar.radio(
     "Select Dataset",
-    ["Dataset 1 (Telco - 78.99% accuracy)", "Dataset 2 (Telecom - 94.70% accuracy)"],
+    ["Dataset 1 (Telco Balanced - 96.69% accuracy & 98.38% recall)", "Dataset 2 (Telecom - 94.70% accuracy)"],
     index=0
 )
 

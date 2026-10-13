@@ -9,6 +9,7 @@ const MODEL_COLOR = {
   'XGBoost':             '#d97706',
   'LightGBM':            '#059669',
   'Stacked Ensemble':    '#7c3aed',
+  'Stacking Ensemble':   '#7c3aed',
 }
 
 const METRICS = [
@@ -169,7 +170,7 @@ export default function ModelComparison() {
                 <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {m.name}
                 </div>
-                {isEns && (
+                {(m.is_deployed ?? isEns) && (
                   <span style={{ fontSize: '0.65rem', fontWeight: 700, background: color + '18',
                     color: color, padding: '2px 6px', borderRadius: 4, border: `1px solid ${color}44` }}>
                     Deployed

@@ -1,52 +1,26 @@
 {
-  "Random Forest": [
-    [
-      805,
-      230
-    ],
-    [
-      93,
-      281
-    ]
-  ],
-  "XGBoost": [
-    [
-      874,
-      161
-    ],
-    [
-      141,
-      233
-    ]
-  ],
-  "LightGBM": [
-    [
-      873,
-      162
-    ],
-    [
-      145,
-      229
-    ]
-  ],
-  "Stacking Ensemble": [
-    [
-      917,
-      118
-    ],
-    [
-      166,
-      208
-    ]
-  ],
-  "Stacking Ensemble (Optimized Threshold)": [
-    [
-      813,
-      222
-    ],
-    [
-      98,
-      276
-    ]
-  ]
+  "Random Forest": {
+    "tn": 808,
+    "fp": 227,
+    "fn": 94,
+    "tp": 280
+  },
+  "XGBoost": {
+    "tn": 782,
+    "fp": 253,
+    "fn": 88,
+    "tp": 286
+  },
+  "LightGBM": {
+    "tn": 796,
+    "fp": 239,
+    "fn": 100,
+    "tp": 274
+  },
+  "Stacking Ensemble": {
+    "tn": 610,
+    "fp": 425,
+    "fn": 36,
+    "tp": 338
+  }
 }

@@ -1,0 +1,11 @@
+customer_id,probability,risk_level,top_factors,recommended_action
+CUST001,0.8304091749260335,Critical,"['MultipleRiskFactors', 'NoOnlineSecurity', 'PaperlessBilling']",Bundle free online security add-on for 3 months.
+CUST002,0.2049250492771366,Medium,"['NoTechSupport', 'MonthlyChargesPerTenure', 'ContractLength']",Proactively offer free tech support session.
+CUST003,0.10545780884155469,Low,"['MonthlyCharges', 'AvgMonthlySpend', 'TechSupport_Yes']",Offer a bundled discount to reduce effective monthly cost.
+CUST004,0.8785122260376333,Critical,"['MultipleRiskFactors', 'MonthlyChargesPerTenure', 'ServiceRiskCount']",Offer a bundled discount to reduce effective monthly cost.
+CUST005,0.25226761863778163,Medium,"['ContractLength', 'StreamingMovies_Yes', 'TechSupport_Yes']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST006,0.4067051193159008,Medium,"['IsMonthToMonth', 'NoTechSupport', 'PaperlessBilling']",Proactively offer free tech support session.
+CUST007,0.8998768671940226,Critical,"['MultipleRiskFactors', 'MonthlyChargesPerTenure', 'ServiceRiskCount']",Offer a bundled discount to reduce effective monthly cost.
+CUST008,0.1689990664410755,Low,"['MonthlyCharges', 'TechSupport_Yes', 'AvgMonthlySpend']",Offer a bundled discount to reduce effective monthly cost.
+CUST009,0.1652212038753271,Low,"['ContractLength', 'StreamingMovies_Yes', 'TechSupport_Yes']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST010,0.2091106088997645,Medium,"['MonthlyChargesPerTenure', 'ContractLength', 'ChargeToTenureRatio']",Offer a bundled discount to reduce effective monthly cost.

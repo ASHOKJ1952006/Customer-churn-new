@@ -1,0 +1,172 @@
+{
+  "models": [
+    {
+      "name": "Random Forest",
+      "short": "RF",
+      "type": "individual",
+      "color": "#2563eb",
+      "description": "Regularized Bagging Trees with balanced class weights via Optuna.",
+      "accuracy": 0.7686,
+      "precision": 0.5458,
+      "recall": 0.7647,
+      "f1": 0.637,
+      "roc_auc": 0.8439,
+      "pr_auc": 0.6475,
+      "brier": 0.1567,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          797,
+          238
+        ],
+        [
+          88,
+          286
+        ]
+      ],
+      "tn": 797,
+      "fp": 238,
+      "fn": 88,
+      "tp": 286
+    },
+    {
+      "name": "XGBoost",
+      "short": "XGB",
+      "type": "individual",
+      "color": "#d97706",
+      "description": "Gradient Boosting with L1/L2 regularization and tree subsampling via Optuna.",
+      "accuracy": 0.78,
+      "precision": 0.5744,
+      "recall": 0.6604,
+      "f1": 0.6144,
+      "roc_auc": 0.8456,
+      "pr_auc": 0.6626,
+      "brier": 0.1415,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          852,
+          183
+        ],
+        [
+          127,
+          247
+        ]
+      ],
+      "tn": 852,
+      "fp": 183,
+      "fn": 127,
+      "tp": 247
+    },
+    {
+      "name": "LightGBM",
+      "short": "LGBM",
+      "type": "individual",
+      "color": "#059669",
+      "description": "Leaf-wise Gradient Boosting with leaf constraint regularization via Optuna.",
+      "accuracy": 0.78,
+      "precision": 0.5737,
+      "recall": 0.6658,
+      "f1": 0.6163,
+      "roc_auc": 0.8454,
+      "pr_auc": 0.6624,
+      "brier": 0.142,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          850,
+          185
+        ],
+        [
+          125,
+          249
+        ]
+      ],
+      "tn": 850,
+      "fp": 185,
+      "fn": 125,
+      "tp": 249
+    },
+    {
+      "name": "Stacking Ensemble",
+      "short": "Ensemble",
+      "type": "ensemble",
+      "color": "#7c3aed",
+      "description": "Stacking (RF + XGB + LGBM) via Logistic Regression meta-learner with out-of-fold calibration.",
+      "accuracy": 0.7693,
+      "precision": 0.5474,
+      "recall": 0.7567,
+      "f1": 0.6352,
+      "roc_auc": 0.8456,
+      "pr_auc": 0.6552,
+      "brier": 0.1656,
+      "threshold": 0.55,
+      "confusion_matrix": [
+        [
+          801,
+          234
+        ],
+        [
+          91,
+          283
+        ]
+      ],
+      "tn": 801,
+      "fp": 234,
+      "fn": 91,
+      "tp": 283,
+      "recall_mode": {
+        "accuracy": 0.6721,
+        "precision": 0.442,
+        "recall": 0.8957,
+        "f1": 0.5919,
+        "roc_auc": 0.8456,
+        "pr_auc": 0.6552,
+        "brier": 0.1656,
+        "threshold": 0.29,
+        "confusion_matrix": [
+          [
+            612,
+            423
+          ],
+          [
+            39,
+            335
+          ]
+        ],
+        "tn": 612,
+        "fp": 423,
+        "fn": 39,
+        "tp": 335
+      }
+    }
+  ],
+  "metric_keys": [
+    "accuracy",
+    "recall",
+    "precision",
+    "f1",
+    "roc_auc",
+    "brier"
+  ],
+  "metric_labels": {
+    "accuracy": "Accuracy",
+    "recall": "Recall",
+    "precision": "Precision",
+    "f1": "F1 Score",
+    "roc_auc": "ROC-AUC",
+    "brier": "Brier Score"
+  },
+  "dataset": "Telco Customer Churn (IBM)",
+  "updated_at": "2026-09-18T22:10:48.868656",
+  "model_version": "v3.5-optimized-ensemble",
+  "feature_count": 83,
+  "thresholds": {
+    "random_forest": 0.5,
+    "xgboost": 0.5,
+    "lightgbm": 0.5,
+    "stacking_ensemble": 0.55,
+    "stacking_ensemble_recall_prioritized": 0.29
+  },
+  "is_fallback": false
+}

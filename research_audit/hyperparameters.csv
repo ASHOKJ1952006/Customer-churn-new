@@ -1,0 +1,38 @@
+Model,Parameter,Production_Value,Phase2_CV_Value,Paper_Draft_Value,Notes
+Random Forest,n_estimators,250,200,300 (main.tex) / 250 (final.tex),Discrepancy: main.tex says B=300; production model uses 250; Phase 2 CV used 200
+Random Forest,max_depth,12,10,12,Production model uses 12; Phase 2 CV used 10
+Random Forest,min_samples_split,6,6,6,Consistent across production and CV
+Random Forest,min_samples_leaf,2,2,2,Consistent across production and CV
+Random Forest,max_features,sqrt,sqrt,sqrt,sqrt(D) = sqrt(27) ≈ 5.2
+Random Forest,class_weight,None,None,None,No weighting in production model
+Random Forest,bootstrap,True,True,True,Standard bootstrap aggregation
+Random Forest,random_state,42,seed (42/100),42,Fixed seed
+XGBoost,n_estimators,200,150,200 (final.tex),Production uses 200; Phase 2 CV used 150
+XGBoost,max_depth,5,5,6 (main.tex) / 5 (code),Discrepancy: main.tex says d=6; production model uses 5
+XGBoost,learning_rate,0.06,0.08,0.05 (main.tex) / 0.06 (code),Discrepancy: main.tex says eta=0.05; production model uses 0.06
+XGBoost,subsample,0.85,0.85,0.85,Row subsampling ratio
+XGBoost,colsample_bytree,0.85,0.85,0.85,Feature subsampling per tree
+XGBoost,min_child_weight,3,default (1),Not specified,Production sets to 3
+XGBoost,gamma,0.1,default (0.0),Not specified,Minimum loss reduction
+XGBoost,reg_alpha,0.05,default (0.0),Not specified,L1 leaf regularization
+XGBoost,reg_lambda,1.0,default (1.0),Not specified,L2 leaf regularization
+XGBoost,objective,binary:logistic,binary:logistic,binary:logistic,Standard logistic loss
+XGBoost,eval_metric,logloss,logloss,logloss,Binary cross-entropy
+XGBoost,random_state,42,seed (42/100),42,Fixed seed
+LightGBM,n_estimators,200,150,200 (final.tex),Production uses 200; Phase 2 CV used 150
+LightGBM,learning_rate,0.06,0.08,0.06,Production uses 0.06; Phase 2 CV used 0.08
+LightGBM,max_depth,6,6,6,Maximum tree depth
+LightGBM,num_leaves,31,31,31,Standard leaf-wise growth
+LightGBM,min_child_samples,20,default (20),Not specified,Minimum data in leaf
+LightGBM,subsample,0.85,0.85,0.85,Bagging fraction
+LightGBM,colsample_bytree,0.85,0.85,0.85,Feature fraction
+LightGBM,reg_alpha,0.05,default (0.0),Not specified,L1 regularization
+LightGBM,reg_lambda,1.0,default (0.0),Not specified,L2 regularization
+LightGBM,random_state,42,seed (42/100),42,Fixed seed
+LightGBM,verbose,-1,-1,-1,Silent execution
+Stacking Ensemble,Base_Models,RF (250) + XGB (200) + LGBM (200),RF (200) + XGB (150) + LGBM (150),RF + XGB + LGBM,3 tree ensembles
+Stacking Ensemble,Meta_Learner,LogisticRegression(C=1.0),LogisticRegression(C=1.0),LogisticRegression,L2 regularized
+Stacking Ensemble,CV_Folds,5-Fold OOF,5-Fold OOF,5-Fold OOF,Out-of-fold probability estimation
+Stacking Ensemble,Meta_Features,3 OOF probabilities,3 OOF probabilities,3 OOF probabilities,[p_rf; p_xgb; p_lgbm] in R^3
+Stacking Ensemble,Stack_Method,predict_proba,predict_proba,predict_proba,Probability meta-features
+Stacking Ensemble,Passthrough,False,False,False,Original features not passed to meta-learner

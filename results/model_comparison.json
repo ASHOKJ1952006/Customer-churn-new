@@ -1,91 +1,146 @@
 {
-  "dataset": "IBM Telco Customer Churn",
-  "train_samples": 5634,
-  "test_samples": 1409,
-  "features_used": 58,
   "models": [
     {
-      "model": "Random Forest",
-      "accuracy": 0.7707594038325053,
-      "precision": 0.5499021526418787,
-      "recall": 0.7513368983957219,
-      "f1_score": 0.6350282485875707,
-      "roc_auc": 0.8442390658503192,
-      "pr_auc": 0.6505778238351639,
-      "brier_score": 0.15367273700223488,
-      "true_negative": 805,
-      "false_positive": 230,
-      "false_negative": 93,
-      "true_positive": 281
-    },
-    {
-      "model": "XGBoost",
-      "accuracy": 0.7856635911994322,
-      "precision": 0.5913705583756346,
-      "recall": 0.6229946524064172,
-      "f1_score": 0.6067708333333334,
-      "roc_auc": 0.843329716603374,
-      "pr_auc": 0.6602494645014767,
-      "brier_score": 0.14119388163089752,
-      "true_negative": 874,
-      "false_positive": 161,
-      "false_negative": 141,
-      "true_positive": 233
-    },
-    {
-      "model": "LightGBM",
-      "accuracy": 0.7821149751596878,
-      "precision": 0.5856777493606138,
-      "recall": 0.6122994652406417,
-      "f1_score": 0.5986928104575163,
-      "roc_auc": 0.8412035960629313,
-      "pr_auc": 0.6596556398079007,
-      "brier_score": 0.14114839789809286,
-      "true_negative": 873,
-      "false_positive": 162,
-      "false_negative": 145,
-      "true_positive": 229
-    },
-    {
-      "model": "Stacking Ensemble",
-      "accuracy": 0.7984386089425124,
-      "precision": 0.6380368098159509,
-      "recall": 0.5561497326203209,
-      "f1_score": 0.5942857142857143,
-      "roc_auc": 0.8448694102146788,
-      "pr_auc": 0.6541745547615139,
-      "brier_score": 0.13685915052634776,
-      "true_negative": 917,
-      "false_positive": 118,
-      "false_negative": 166,
-      "true_positive": 208
-    }
-  ],
-  "decision_thresholds": {
-    "default_threshold": 0.5,
-    "cv_optimized_threshold": 0.3229,
-    "ensemble_at_optimized_threshold": {
-      "accuracy": 0.772888573456352,
-      "precision": 0.5542168674698795,
-      "recall": 0.7379679144385026,
-      "f1_score": 0.6330275229357798,
+      "name": "Random Forest",
+      "short": "RF",
+      "type": "individual",
+      "accuracy": 0.7736,
+      "precision": 0.5536,
+      "recall": 0.7594,
+      "f1": 0.6404,
+      "roc_auc": 0.8451,
+      "pr_auc": 0.6477,
+      "brier": 0.153,
+      "threshold": 0.5,
       "confusion_matrix": [
         [
-          813,
-          222
+          806,
+          229
         ],
         [
-          98,
-          276
+          90,
+          284
         ]
-      ]
+      ],
+      "tn": 806,
+      "fp": 229,
+      "fn": 90,
+      "tp": 284
+    },
+    {
+      "name": "XGBoost",
+      "short": "XGB",
+      "type": "individual",
+      "accuracy": 0.7637,
+      "precision": 0.5397,
+      "recall": 0.746,
+      "f1": 0.6263,
+      "roc_auc": 0.8439,
+      "pr_auc": 0.6563,
+      "brier": 0.1528,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          797,
+          238
+        ],
+        [
+          95,
+          279
+        ]
+      ],
+      "tn": 797,
+      "fp": 238,
+      "fn": 95,
+      "tp": 279
+    },
+    {
+      "name": "LightGBM",
+      "short": "LGBM",
+      "type": "individual",
+      "accuracy": 0.7693,
+      "precision": 0.5518,
+      "recall": 0.6979,
+      "f1": 0.6163,
+      "roc_auc": 0.8422,
+      "pr_auc": 0.6484,
+      "brier": 0.1473,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          823,
+          212
+        ],
+        [
+          113,
+          261
+        ]
+      ],
+      "tn": 823,
+      "fp": 212,
+      "fn": 113,
+      "tp": 261
+    },
+    {
+      "name": "Stacking Ensemble",
+      "short": "Ensemble",
+      "type": "ensemble",
+      "accuracy": 0.7622,
+      "precision": 0.535,
+      "recall": 0.7968,
+      "f1": 0.6402,
+      "roc_auc": 0.846,
+      "pr_auc": 0.6522,
+      "brier": 0.166,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          776,
+          259
+        ],
+        [
+          76,
+          298
+        ]
+      ],
+      "tn": 776,
+      "fp": 259,
+      "fn": 76,
+      "tp": 298,
+      "recall_mode": {
+        "accuracy": 0.6749,
+        "precision": 0.4446,
+        "recall": 0.9011,
+        "f1": 0.5954,
+        "roc_auc": 0.846,
+        "pr_auc": 0.6522,
+        "brier": 0.166,
+        "threshold": 0.29,
+        "confusion_matrix": [
+          [
+            614,
+            421
+          ],
+          [
+            37,
+            337
+          ]
+        ],
+        "tn": 614,
+        "fp": 421,
+        "fn": 37,
+        "tp": 337
+      }
     }
-  },
-  "best_models": {
-    "by_f1": "Random Forest",
-    "by_recall": "Random Forest",
-    "by_roc_auc": "Stacking Ensemble",
-    "by_accuracy": "Stacking Ensemble"
-  },
-  "generated_at": "2026-09-15T12:19:23.040942"
+  ],
+  "dataset": "Telco Customer Churn (IBM)",
+  "updated_at": "2026-09-16T14:17:50.466476",
+  "feature_count": 83,
+  "thresholds": {
+    "random_forest": 0.5,
+    "xgboost": 0.5,
+    "lightgbm": 0.5,
+    "stacking_ensemble": 0.5,
+    "stacking_ensemble_recall_prioritized": 0.29
+  }
 }

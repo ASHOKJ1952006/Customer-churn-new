@@ -1,0 +1,13 @@
+Model,Evaluation_Context,Threshold,Accuracy,Precision,Recall,F1_Score,ROC_AUC,PR_AUC,Brier_Score,TP,TN,FP,FN,Source_File
+Random Forest,Single Test Split (N=1600),0.380,0.9538,0.9459,0.9625,0.9542,0.9869,0.9831,0.0369,770,756,44,30,models/model_comparison_results.json
+XGBoost,Single Test Split (N=1600),0.290,0.9488,0.9254,0.9762,0.9501,0.9901,0.9890,0.0347,781,737,63,19,models/model_comparison_results.json
+LightGBM,Single Test Split (N=1600),0.320,0.9500,0.9337,0.9688,0.9509,0.9895,0.9882,0.0353,775,745,55,25,models/model_comparison_results.json
+Stacking Ensemble,Single Test Split (N=1600),0.260,0.9544,0.9471,0.9625,0.9547,0.9894,0.9880,0.0362,770,757,43,30,models/model_comparison_results.json
+Random Forest,Repeated CV 10-Fold (tau=0.50),0.500,0.9461,0.9517,0.9400,0.9458,0.9865,0.9862,0.0412,751.3,761.1,38.9,48.7,results/phase2_repeated_cv_summary.csv
+XGBoost,Repeated CV 10-Fold (tau=0.50),0.500,0.9498,0.9515,0.9480,0.9497,0.9890,0.9884,0.0383,758.4,761.4,38.6,41.6,results/phase2_repeated_cv_summary.csv
+LightGBM,Repeated CV 10-Fold (tau=0.50),0.500,0.9481,0.9485,0.9476,0.9480,0.9886,0.9878,0.0391,758.8,760.0,40.0,41.2,results/phase2_repeated_cv_summary.csv
+Stacking Ensemble,Repeated CV 10-Fold (tau=0.50),0.500,0.9496,0.9516,0.9474,0.9495,0.9888,0.9882,0.0400,757.2,762.3,37.7,42.8,results/phase2_repeated_cv_summary.csv
+Random Forest,Repeated CV Cost-Optimal 10:1,0.100,0.8792,0.8108,0.9897,0.8913,0.9865,0.9862,0.0412,791.8,614.9,185.1,8.2,results/phase3_threshold_metrics_summary.csv
+XGBoost,Repeated CV Cost-Optimal 10:1,0.060,0.8969,0.8333,0.9931,0.9061,0.9890,0.9884,0.0383,794.5,640.5,159.5,5.5,results/phase3_threshold_metrics_summary.csv
+LightGBM,Repeated CV Cost-Optimal 10:1,0.060,0.8960,0.8322,0.9934,0.9054,0.9886,0.9878,0.0391,794.7,638.9,161.1,5.3,results/phase3_threshold_metrics_summary.csv
+Stacking Ensemble,Repeated CV Cost-Optimal 10:1,0.040,0.9001,0.8391,0.9906,0.9085,0.9888,0.9882,0.0400,792.5,647.6,152.4,7.5,results/phase3_threshold_metrics_summary.csv

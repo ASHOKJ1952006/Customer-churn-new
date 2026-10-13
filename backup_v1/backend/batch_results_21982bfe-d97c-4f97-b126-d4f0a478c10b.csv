@@ -1,0 +1,11 @@
+customer_id,probability,risk_level,top_factors,recommended_action
+CUST007,0.8636408986871873,High,"['Charges_Tenure_Ratio', 'Contract_Two year', 'poly_TotalCharges^2']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST004,0.8529868530730939,High,"['Charges_Tenure_Ratio', 'Contract_Two year', 'Total_Monthly_Ratio']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST001,0.5412236268851898,Medium,"['Contract_Two year', 'InternetService_Fiber optic', 'Contract_Partner']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST002,0.4097852614363039,Medium,"['Charges_Tenure_Ratio', 'Contract_Two year', 'AvgMonthlySpend']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST010,0.3786554773782224,Medium,"['Charges_Tenure_Ratio', 'Contract_Two year', 'Total_Monthly_Ratio']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST006,0.18368261019740464,Low,"['Contract_Two year', 'Total_Monthly_Ratio', 'SeniorCitizen']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST005,0.11996362830966581,Low,"['Contract_Two year', 'Total_Monthly_Ratio', 'InternetService_Fiber optic']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST008,0.0766643088569076,Low,"['poly_MonthlyCharges^2', 'poly_MonthlyCharges TotalCharges', 'Contract_Partner']",Offer a bundled discount to reduce effective monthly cost.
+CUST009,0.010075730541364744,Low,"['Contract_Two year', 'Total_Monthly_Ratio', 'SeniorCitizen']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST003,0.0017690190661721699,Low,"['poly_MonthlyCharges AvgMonthlySpend', 'poly_MonthlyCharges TotalCharges', 'poly_MonthlyCharges^2']",Offer a bundled discount to reduce effective monthly cost.

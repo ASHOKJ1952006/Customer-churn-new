@@ -1,0 +1,11 @@
+customer_id,probability,risk_level,top_factors,recommended_action
+CUST001,0.6111685767324441,High,"['ContractLength', 'FiberAndMonthToMonth', 'IsElectronicCheck']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST002,0.09460254320730074,Low,"['MonthlyChargesPerTenure', 'TotalChargesDifference', 'AvgMonthlySpend']",Offer a bundled discount to reduce effective monthly cost.
+CUST003,0.043198250608925126,Low,"['MonthlyCharges', 'AvgMonthlySpend', 'SeniorCitizen']",Offer a bundled discount to reduce effective monthly cost.
+CUST004,0.7100914548513788,Critical,"['MonthlyChargesPerTenure', 'ContractLength', 'PhoneService']",Offer a bundled discount to reduce effective monthly cost.
+CUST005,0.13360598778923707,Low,"['TotalChargesDifference', 'StreamingMovies_Yes', 'PaperlessBilling']",Offer a loyalty reward tied to billing preference.
+CUST006,0.1813669266349249,Low,"['ContractLength', 'IsElectronicCheck', 'SeniorCitizen']",Offer discount to upgrade to a longer-term contract for better lock-in.
+CUST007,0.749567354928849,Critical,"['MonthlyChargesPerTenure', 'ContractLength', 'FiberAndMonthToMonth']",Offer a bundled discount to reduce effective monthly cost.
+CUST008,0.09435006342625865,Low,"['MonthlyCharges', 'AvgMonthlySpend', 'StreamingMovies_Yes']",Offer a bundled discount to reduce effective monthly cost.
+CUST009,0.07858478754518702,Low,"['StreamingMovies_Yes', 'SeniorCitizen', 'TotalChargesDifference']",Review customer profile for a tailored retention offer.
+CUST010,0.1257438516356031,Low,"['MonthlyChargesPerTenure', 'ContractLength', 'ChargeIncreaseRatio']",Offer a bundled discount to reduce effective monthly cost.

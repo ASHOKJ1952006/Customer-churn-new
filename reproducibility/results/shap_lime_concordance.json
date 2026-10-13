@@ -1,0 +1,10 @@
+{
+  "Sample_Size": 20,
+  "Spearman_Correlation_Mean": 0.10786580255198489,
+  "Spearman_Correlation_Std": 0.12094772566977839,
+  "Spearman_Correlation_Median": 0.10484383324092297,
+  "Top3_Overlap_Mean": 0.11666666666666667,
+  "Top3_Overlap_Std": 0.19075871903765995,
+  "Top5_Overlap_Mean": 0.39,
+  "Top5_Overlap_Std": 0.1841195263952197
+}

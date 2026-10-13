@@ -16,6 +16,10 @@ import lime.lime_tabular
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scripts')))
+try:
+    from feature_engineering_v2 import engineer_features_v2, get_churn_v2_feature_names
+except ImportError:
+    engineer_features_v2 = None
 from scripts.feature_engineering import engineer_features, CONTINUOUS_NUMERIC_COLS
 from business_factors import get_business_factor
 
@@ -57,12 +61,19 @@ class TabularLIMEService:
 
             if bg_path and dataset_name == 'ds1':
                 df_raw = pd.read_csv(bg_path).head(150)
-                df_enc = engineer_features(df_raw, feature_set='B')
+                if engineer_features_v2 is not None:
+                    df_enc = engineer_features_v2(df_raw)
+                else:
+                    df_enc = engineer_features(df_raw, feature_set='B')
                 for col in feature_columns:
                     if col not in df_enc.columns:
                         df_enc[col] = 0.0
                 df_enc = df_enc[feature_columns].astype(float)
-                scale_cols = [c for c in CONTINUOUS_NUMERIC_COLS if c in df_enc.columns]
+                if engineer_features_v2 is not None:
+                    scale_cols, _ = get_churn_v2_feature_names()
+                else:
+                    scale_cols = [c for c in CONTINUOUS_NUMERIC_COLS if c in df_enc.columns]
+                scale_cols = [c for c in scale_cols if c in df_enc.columns]
                 if scaler is not None and hasattr(scaler, 'transform') and scale_cols:
                     df_enc[scale_cols] = scaler.transform(df_enc[scale_cols])
                 training_matrix = df_enc.values
