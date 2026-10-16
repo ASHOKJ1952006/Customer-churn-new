@@ -1,0 +1,34 @@
+customer_id,churn_probability,risk_level,prediction,top_factors,recommended_action,plain_explanation
+CUST-1001,0.9992,Critical,1,Customer Tenure (Months Active); Monthlycharges X Ismonthtomonth; Acute High-Risk Profile (M2M + Electronic Check),Enroll customer into the VIP Early-Tenure Onboarding program with a dedicated care check-in call and welcome service verification.,"The main factors increasing churn risk are:
+• How long they have been a customer very strongly increases churn risk.
+• Monthlycharges x ismonthtomonth very strongly increases churn risk.
+• High-risk profile (month-to-month + electronic check) very strongly increases churn risk.
+
+Overall, the customer's profile indicates elevated churn risk."
+CUST-1002,0.0037,Low,0,Fiber Optic Internet Tier; Charge Spike Ratio; Tenure X Monthlycharges,Migrate customer from Electronic Check to Automatic Bank Transfer or Credit Card Autopay with an immediate $10 one-time bill credit.,"
+The main factors reducing churn risk are:
+• How long they have been a customer very strongly reduces churn risk.
+• Two-year contract very strongly reduces churn risk.
+• Tenuresquared very strongly reduces churn risk.
+
+Overall, the customer's profile indicates lower churn risk."
+CUST-1003,0.9993,Critical,1,Customer Tenure (Months Active); Monthlycharges X Ismonthtomonth; Monthly Service Charges,Enroll customer into the VIP Early-Tenure Onboarding program with a dedicated care check-in call and welcome service verification.,"The main factors increasing churn risk are:
+• How long they have been a customer very strongly increases churn risk.
+• Monthlycharges x ismonthtomonth very strongly increases churn risk.
+• Monthly bill amount very strongly increases churn risk.
+
+Overall, the customer's profile indicates elevated churn risk."
+CUST-1004,0.1545,Low,0,Fiber Optic Internet Tier; Charge Spike Ratio; One-Year Contract Commitment,Migrate customer from Electronic Check to Automatic Bank Transfer or Credit Card Autopay with an immediate $10 one-time bill credit.,"The main factor increasing churn risk is:
+• Fiber optic internet very strongly increases churn risk.
+
+The main factors reducing churn risk are:
+• How long they have been a customer very strongly reduces churn risk.
+• Monthly bill amount significantly reduces churn risk.
+
+Overall, the customer's profile shows competing factors that influence their churn probability."
+CUST-1005,0.9969,Critical,1,Customer Tenure (Months Active); Acute High-Risk Profile (M2M + Electronic Check); Charge Spike Ratio,Enroll customer into the VIP Early-Tenure Onboarding program with a dedicated care check-in call and welcome service verification.,"The main factors increasing churn risk are:
+• How long they have been a customer very strongly increases churn risk.
+• High-risk profile (month-to-month + electronic check) very strongly increases churn risk.
+• Chargeincreaseratio very strongly increases churn risk.
+
+Overall, the customer's profile indicates elevated churn risk."

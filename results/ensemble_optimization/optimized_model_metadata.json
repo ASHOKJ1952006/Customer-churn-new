@@ -1,0 +1,21 @@
+{
+    "model_name": "churn_v2_optimized_stacking",
+    "meta_learner": "LogitLogisticRegression (C=0.1, L2)",
+    "base_models": [
+        "Random Forest (250 trees)",
+        "XGBoost (200 trees)",
+        "LightGBM (200 trees)"
+    ],
+    "default_threshold": 0.5,
+    "cost_optimal_threshold": 0.1,
+    "f1_optimal_threshold": 0.54,
+    "test_metrics_default": {
+        "accuracy": 0.955625,
+        "recall": 0.95375,
+        "precision": 0.9573400250941029,
+        "f1": 0.9555416405760802,
+        "roc_auc": 0.9896296874999999,
+        "brier_score": 0.0346274673408276,
+        "log_loss": 0.12393677108516332
+    }
+}

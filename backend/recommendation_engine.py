@@ -67,17 +67,27 @@ class TelecomRetentionDecisionEngine:
         # ----------------------------------------------------------------------
         # 1. Extract Customer State Profile
         # ----------------------------------------------------------------------
-        tenure = float(inputs.get("tenure", 0))
-        monthly_charges = float(inputs.get("monthly_charges", 0.0))
-        total_charges = float(inputs.get("total_charges", 0.0))
-        contract = inputs.get("contract", "Month-to-month")
-        payment_method = inputs.get("payment_method", "Electronic check")
-        internet_service = inputs.get("internet_service", "DSL")
-        tech_support = inputs.get("tech_support", "No")
-        online_security = inputs.get("online_security", "No")
-        streaming_tv = inputs.get("streaming_tv", "No")
-        streaming_movies = inputs.get("streaming_movies", "No")
-        paperless_billing = inputs.get("paperless_billing", "Yes")
+        import math
+        def safe_float(val, default=0.0):
+            if val is None:
+                return default
+            try:
+                f = float(val)
+                return default if (math.isnan(f) or math.isinf(f)) else f
+            except (ValueError, TypeError):
+                return default
+
+        tenure = safe_float(inputs.get("tenure") if inputs.get("tenure") is not None else inputs.get("Tenure"), 0.0)
+        monthly_charges = safe_float(inputs.get("monthly_charges") if inputs.get("monthly_charges") is not None else inputs.get("MonthlyCharges"), 0.0)
+        total_charges = safe_float(inputs.get("total_charges") if inputs.get("total_charges") is not None else inputs.get("TotalCharges"), 0.0)
+        contract = str(inputs.get("contract") or inputs.get("Contract") or "Month-to-month")
+        payment_method = str(inputs.get("payment_method") or inputs.get("PaymentMethod") or "Electronic check")
+        internet_service = str(inputs.get("internet_service") or inputs.get("InternetService") or "DSL")
+        tech_support = str(inputs.get("tech_support") or inputs.get("TechSupport") or "No")
+        online_security = str(inputs.get("online_security") or inputs.get("OnlineSecurity") or "No")
+        streaming_tv = str(inputs.get("streaming_tv") or inputs.get("StreamingTV") or "No")
+        streaming_movies = str(inputs.get("streaming_movies") or inputs.get("StreamingMovies") or "No")
+        paperless_billing = str(inputs.get("paperless_billing") or inputs.get("PaperlessBilling") or "Yes")
 
         avg_monthly = total_charges / max(tenure, 1.0)
         charge_increase = monthly_charges - avg_monthly

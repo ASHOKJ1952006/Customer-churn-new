@@ -10,6 +10,7 @@ function BatchUpload({ dataset }) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [expandedCustomer, setExpandedCustomer] = useState(null)
 
   const handleDrag = (e) => {
     e.preventDefault()
@@ -92,14 +93,6 @@ function BatchUpload({ dataset }) {
     }
   }
 
-  const getRiskBadgeClass = (riskLevel) => {
-    switch (riskLevel) {
-      case 'High': return 'badge-high'
-      case 'Medium': return 'badge-medium'
-      case 'Low': return 'badge-low'
-      default: return ''
-    }
-  }
 
   return (
     <div className="batch-upload-page">
@@ -119,16 +112,16 @@ function BatchUpload({ dataset }) {
           <input
             type="file"
             id="file-upload"
-            accept=".csv"
+            accept=".csv, .xlsx, .xls"
             onChange={handleChange}
             style={{ display: 'none' }}
           />
           <label htmlFor="file-upload" className="upload-label">
             <div className="upload-icon">📁</div>
             <p className="upload-text">
-              {file ? file.name : 'Drag & drop CSV file here, or click to select'}
+              {file ? file.name : 'Drag & drop CSV or Excel file here, or click to select'}
             </p>
-            <p className="upload-hint">Supported format: .csv</p>
+            <p className="upload-hint">Supported formats: .csv, .xlsx, .xls</p>
           </label>
         </div>
 
@@ -224,7 +217,7 @@ function BatchUpload({ dataset }) {
 
           <div className="mt-4">
             <div className="flex-between">
-              <h4>📋 Customer Results</h4>
+              <h4>📋 Customer Results & Individual Explanations</h4>
               <button 
                 className="btn btn-secondary"
                 onClick={() => handleDownload(result.batch_id)}
@@ -238,36 +231,124 @@ function BatchUpload({ dataset }) {
                 <thead>
                   <tr>
                     <th>Customer ID</th>
-                    <th>Probability</th>
                     <th>
-                      <Tooltip content="Low risk means the model's prediction is below the decision threshold — action probably isn't needed. Medium/High mean the model believes this customer is likely to churn and flags them for retention outreach.">
-                        Risk Level
-                      </Tooltip>
-                    </th>
-                    <th>
-                      <Tooltip content="These are the specific factors that pushed this customer's risk score up the most, based on their profile — not general trends, but what mattered for THIS customer specifically.">
+                      <Tooltip content="Specific individual SHAP drivers that pushed this customer's risk score up.">
                         Top Factors
                       </Tooltip>
                     </th>
-                    <th>Action</th>
+                    <th>Primary Recommendation</th>
+                    <th>Explainability</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {result.results.slice(0, 50).map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.customer_id}</td>
-                      <td>{(item.probability * 100).toFixed(1)}%</td>
-                      <td>
-                        <span className={`badge ${getRiskBadgeClass(item.risk_level)}`}>
-                          {item.risk_level}
-                        </span>
-                      </td>
-                      <td>{item.top_factors.slice(0, 2).join(', ')}</td>
-                      <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.recommended_action}
-                      </td>
-                    </tr>
-                  ))}
+                  {result.results.slice(0, 50).map((item, index) => {
+                    const isExpanded = expandedCustomer === item.customer_id
+                    return (
+                      <>
+                        <tr key={index} style={{ background: isExpanded ? '#f8fafc' : 'transparent', borderBottom: isExpanded ? 'none' : '1px solid var(--color-gray-200)' }}>
+                          <td style={{ fontWeight: '600', color: '#1e293b' }}>{item.customer_id}</td>
+                          <td style={{ maxWidth: '220px', fontSize: '0.875rem' }}>
+                            {Array.isArray(item.top_factors) ? item.top_factors.slice(0, 2).join(', ') : item.top_factors}
+                          </td>
+                          <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.875rem' }}>
+                            {item.recommended_action}
+                          </td>
+                          <td>
+                            <button
+                              className={`btn btn-sm ${isExpanded ? 'btn-primary' : 'btn-outline'}`}
+                              onClick={() => setExpandedCustomer(prev => prev === item.customer_id ? null : item.customer_id)}
+                              style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                            >
+                              <span>{isExpanded ? '▲ Close' : '🔍 Explain'}</span>
+                            </button>
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr key={`exp-${index}`} style={{ background: '#f8fafc' }}>
+                            <td colSpan={4} style={{ padding: '1rem 1.5rem', borderBottom: '2px solid #cbd5e1' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {/* Plain English Explanation */}
+                                {item.explanation && (
+                                  <div style={{ background: '#ffffff', padding: '0.9rem 1.1rem', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #3b82f6' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                                      <span style={{ fontSize: '1rem' }}>💡</span>
+                                      <strong style={{ color: '#1e40af', fontSize: '0.9rem' }}>Plain-English Churn Assessment (SHAP Derived)</strong>
+                                    </div>
+                                    <p style={{ margin: 0, whiteSpace: 'pre-line', fontSize: '0.875rem', color: '#334155', lineHeight: '1.5' }}>
+                                      {item.explanation}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="grid grid-2" style={{ gap: '1rem' }}>
+                                  {/* Top SHAP Risk Drivers */}
+                                  <div style={{ background: '#ffffff', padding: '0.9rem 1.1rem', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                                      <span>🔴</span>
+                                      <strong style={{ color: '#991b1b', fontSize: '0.875rem' }}>Top Churn Risk Drivers (SHAP +)</strong>
+                                    </div>
+                                    {item.shap?.top_risk_factors?.length > 0 ? (
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                        {item.shap.top_risk_factors.slice(0, 4).map((f, fi) => (
+                                          <div key={fi} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                                            <span style={{ color: '#334155' }}>{f.display_name}</span>
+                                            <span style={{ color: '#dc2626', fontWeight: '700' }}>+{f.shap_value}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p style={{ fontSize: '0.825rem', color: '#64748b', margin: 0 }}>
+                                        {Array.isArray(item.top_factors) ? item.top_factors.join(', ') : 'No high risk drivers.'}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Protective Factors */}
+                                  <div style={{ background: '#ffffff', padding: '0.9rem 1.1rem', borderRadius: '8px', border: '1px solid #dcfce7' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                                      <span>🟢</span>
+                                      <strong style={{ color: '#166534', fontSize: '0.875rem' }}>Top Protective Factors (SHAP -)</strong>
+                                    </div>
+                                    {item.shap?.top_protective_factors?.length > 0 ? (
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                        {item.shap.top_protective_factors.slice(0, 4).map((f, fi) => (
+                                          <div key={fi} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                                            <span style={{ color: '#334155' }}>{f.display_name}</span>
+                                            <span style={{ color: '#16a34a', fontWeight: '700' }}>{f.shap_value}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p style={{ fontSize: '0.825rem', color: '#64748b', margin: 0 }}>
+                                        No significant protective factors detected.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Dynamic Retention Recommendations */}
+                                {item.recommendations?.length > 0 && (
+                                  <div style={{ background: '#ffffff', padding: '0.9rem 1.1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                    <strong style={{ color: '#1e293b', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
+                                      🎯 Actionable Retention Plan
+                                    </strong>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                      {item.recommendations.map((rec, ri) => (
+                                        <div key={ri} style={{ fontSize: '0.825rem', padding: '0.4rem 0.6rem', background: '#f8fafc', borderRadius: '4px', borderLeft: '3px solid #2563eb' }}>
+                                          <strong>{rec.strategy || rec.action}</strong>: {rec.details || rec.action}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

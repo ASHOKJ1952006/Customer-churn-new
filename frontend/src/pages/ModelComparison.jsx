@@ -20,9 +20,7 @@ const METRICS = [
   { key: 'accuracy',  label: 'Accuracy',    suffix: '%', higherBetter: true,
     note: 'Overall correct predictions' },
   { key: 'precision', label: 'Precision',   suffix: '%', higherBetter: true,
-    note: 'Of flagged churners, fracti  on that actually churn' },
-  { key: 'roc_auc',   label: 'ROC-AUC',    suffix: '%', higherBetter: true,
-    note: 'Discrimination ability across all thresholds' },
+    note: 'Of flagged churners, fraction that actually churn' },
   { key: 'brier',     label: 'Brier Score', suffix: '',  higherBetter: false,
     note: 'Calibration quality — lower is better' },
 ]
@@ -146,7 +144,7 @@ export default function ModelComparison() {
               </span>
             </div>
             <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
-              {data.dataset} &nbsp;·&nbsp; 1,409 Untouched Held-Out Test Records &nbsp;·&nbsp; Zero Data Leakage &nbsp;·&nbsp; Optuna TPE Tuned
+              {data.dataset} &nbsp;·&nbsp; {data.test_records ? data.test_records.toLocaleString() : '1,600'} Untouched Held-Out Test Records &nbsp;·&nbsp; Zero Data Leakage &nbsp;·&nbsp; Optuna TPE Tuned
             </p>
           </div>
         </div>
@@ -182,7 +180,7 @@ export default function ModelComparison() {
               </div>
               <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginBottom: '0.9rem' }}>Recall</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem 0.75rem' }}>
-                {[['F1', m.f1], ['Accuracy', m.accuracy], ['AUC', m.roc_auc], ['Brier', m.brier]].map(([lbl, val]) => (
+                {[['F1', m.f1], ['Accuracy', m.accuracy], ['Precision', m.precision], ['Brier', m.brier]].map(([lbl, val]) => (
                   <div key={lbl}>
                     <div style={{ fontSize: '0.67rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{lbl}</div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151' }}>
@@ -268,8 +266,6 @@ export default function ModelComparison() {
                     {selMetric === mt.key && <span style={{ marginLeft: 4, fontSize: '0.65rem' }}>▲</span>}
                   </th>
                 ))}
-                <th style={{ textAlign: 'right', fontWeight: 600, color: '#374151', padding: '0.75rem 1rem' }}>Threshold</th>
-                <th style={{ textAlign: 'right', fontWeight: 600, color: '#374151', padding: '0.75rem 1rem' }}>Train Time</th>
               </tr>
             </thead>
             <tbody>
@@ -325,15 +321,6 @@ export default function ModelComparison() {
                         </td>
                       )
                     })}
-
-                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: '#6b7280', fontSize: '0.8rem' }}>
-                      {m.threshold?.toFixed(4)}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: '#6b7280', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                      {m.training_time_sec >= 60
-                        ? `${(m.training_time_sec / 60).toFixed(1)} min`
-                        : `${m.training_time_sec} s`}
-                    </td>
                   </tr>
                 )
               })}
@@ -398,7 +385,6 @@ export default function ModelComparison() {
                   ['F1 (↑)',          `${(Math.max(...individuals.map(m=>m.f1))*100).toFixed(1)}%`,       `${(ensemble?.f1*100).toFixed(1)}%`,       null],
                   ['Accuracy (↑)',    `${(Math.max(...individuals.map(m=>m.accuracy))*100).toFixed(1)}%`, `${(ensemble?.accuracy*100).toFixed(1)}%`, false],
                   ['Brier (↓)',       `${Math.min(...individuals.map(m=>m.brier)).toFixed(4)}`,           `${ensemble?.brier.toFixed(4)}`,           true],
-                  ['Train Time',      `${Math.min(...individuals.map(m=>m.training_time_sec))} s`,        `${ensemble?.training_time_sec >= 60 ? (ensemble.training_time_sec/60).toFixed(1)+' min' : ensemble?.training_time_sec+'s'}`, false],
                 ].map(([dim, ind, ens, ensWins]) => (
                   <tr key={dim}>
                     <td style={{ padding: '0.5rem', color: '#374151', fontWeight: 500 }}>{dim}</td>
@@ -413,7 +399,7 @@ export default function ModelComparison() {
             </table>
           </div>
           <p style={{ fontSize: '0.72rem', color: '#9ca3af', margin: '0.75rem 0 0' }}>
-            The ensemble wins on recall and calibration at the cost of higher training time and ~1–2% accuracy.
+            The ensemble wins on recall and calibration across holdout test evaluation.
             For a churn use-case (false-negative cost ≫ false-positive cost) this is the correct trade-off.
           </p>
         </div>

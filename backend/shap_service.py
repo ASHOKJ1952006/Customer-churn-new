@@ -101,43 +101,62 @@ def get_display_name(feature_name: str) -> str:
 
 
 def get_actual_feature_value(feature_name: str, input_df: pd.DataFrame, raw_inputs: Optional[Dict[str, Any]] = None) -> Any:
-    """Retrieve readable actual value for a feature."""
+    """Retrieve readable actual value for a feature with full safety for missing/None/NaN inputs."""
     if raw_inputs:
-        if feature_name == 'tenure' and 'tenure' in raw_inputs:
-            return f"{raw_inputs['tenure']} mos"
-        if feature_name == 'MonthlyCharges' and 'monthly_charges' in raw_inputs:
-            return f"${raw_inputs['monthly_charges']:.2f}"
-        if feature_name == 'TotalCharges' and 'total_charges' in raw_inputs:
-            return f"${raw_inputs['total_charges']:.2f}"
-        if feature_name.startswith('Contract_'):
-            expected = feature_name.replace('Contract_', '')
-            actual = raw_inputs.get('contract', '')
-            return "Yes" if actual == expected else "No"
-        if feature_name.startswith('PaymentMethod_'):
-            expected = feature_name.replace('PaymentMethod_', '')
-            actual = raw_inputs.get('payment_method', '')
-            return "Yes" if actual == expected else "No"
-        if feature_name.startswith('InternetService_'):
-            expected = feature_name.replace('InternetService_', '')
-            actual = raw_inputs.get('internet_service', '')
-            return "Yes" if actual == expected else "No"
-        if feature_name == 'HighRiskCombo':
-            m2m = raw_inputs.get('contract') == 'Month-to-month'
-            echeck = raw_inputs.get('payment_method') == 'Electronic check'
-            return "Yes" if (m2m and echeck) else "No"
-        if feature_name == 'ChargeIncrease':
-            tenure = max(float(raw_inputs.get('tenure', 1)), 1.0)
-            avg = float(raw_inputs.get('total_charges', 0)) / tenure
-            inc = float(raw_inputs.get('monthly_charges', 0)) - avg
-            return f"${inc:+.2f}"
+        try:
+            if feature_name == 'tenure':
+                val = raw_inputs.get('tenure') if raw_inputs.get('tenure') is not None else raw_inputs.get('Tenure')
+                if val is not None and not (isinstance(val, float) and (np.isnan(val) or np.isinf(val))):
+                    return f"{int(float(val))} mos"
+            if feature_name == 'MonthlyCharges':
+                val = raw_inputs.get('monthly_charges') if raw_inputs.get('monthly_charges') is not None else raw_inputs.get('MonthlyCharges')
+                if val is not None and not (isinstance(val, float) and (np.isnan(val) or np.isinf(val))):
+                    return f"${float(val):.2f}"
+            if feature_name == 'TotalCharges':
+                val = raw_inputs.get('total_charges') if raw_inputs.get('total_charges') is not None else raw_inputs.get('TotalCharges')
+                if val is not None and not (isinstance(val, float) and (np.isnan(val) or np.isinf(val))):
+                    return f"${float(val):.2f}"
+            if feature_name.startswith('Contract_'):
+                expected = feature_name.replace('Contract_', '')
+                actual = raw_inputs.get('contract') or raw_inputs.get('Contract') or ''
+                return "Yes" if str(actual).strip() == expected else "No"
+            if feature_name.startswith('PaymentMethod_'):
+                expected = feature_name.replace('PaymentMethod_', '')
+                actual = raw_inputs.get('payment_method') or raw_inputs.get('PaymentMethod') or ''
+                return "Yes" if str(actual).strip() == expected else "No"
+            if feature_name.startswith('InternetService_'):
+                expected = feature_name.replace('InternetService_', '')
+                actual = raw_inputs.get('internet_service') or raw_inputs.get('InternetService') or ''
+                return "Yes" if str(actual).strip() == expected else "No"
+            if feature_name == 'HighRiskCombo':
+                c = raw_inputs.get('contract') or raw_inputs.get('Contract')
+                p = raw_inputs.get('payment_method') or raw_inputs.get('PaymentMethod')
+                m2m = c == 'Month-to-month'
+                echeck = p == 'Electronic check'
+                return "Yes" if (m2m and echeck) else "No"
+            if feature_name == 'ChargeIncrease':
+                t_val = raw_inputs.get('tenure') if raw_inputs.get('tenure') is not None else raw_inputs.get('Tenure', 1)
+                tc_val = raw_inputs.get('total_charges') if raw_inputs.get('total_charges') is not None else raw_inputs.get('TotalCharges', 0)
+                mc_val = raw_inputs.get('monthly_charges') if raw_inputs.get('monthly_charges') is not None else raw_inputs.get('MonthlyCharges', 0)
+                tenure = max(float(t_val or 1), 1.0)
+                avg = float(tc_val or 0) / tenure
+                inc = float(mc_val or 0) - avg
+                return f"${inc:+.2f}"
+        except Exception:
+            pass
             
     if feature_name in input_df.columns:
-        val = input_df[feature_name].iloc[0]
-        if isinstance(val, (int, np.integer)) or val in (0.0, 1.0):
-            return "Yes" if val == 1 else "No"
-        if isinstance(val, (float, np.floating)):
-            return f"{val:.2f}"
-        return str(val)
+        try:
+            val = input_df[feature_name].iloc[0]
+            if val is None or (isinstance(val, float) and np.isnan(val)):
+                return "N/A"
+            if isinstance(val, (int, np.integer)) or val in (0.0, 1.0):
+                return "Yes" if val == 1 else "No"
+            if isinstance(val, (float, np.floating)):
+                return f"{val:.2f}"
+            return str(val)
+        except Exception:
+            return "N/A"
     return "N/A"
 
 
@@ -256,39 +275,7 @@ class RobustSHAPExplainer:
                 except Exception as e:
                     logger.info(f"Method A TreeExplainer not directly applicable: {e}")
 
-        # --- Tier 3: Method B - KernelExplainer on predict_proba wrapper ---
-        if shap_values is None:
-            try:
-                cache_key = f"kernel_{dataset_name}"
-                if cache_key not in self._cached_kernel_explainers:
-                    # Construct a representative small background baseline
-                    bg = pd.DataFrame(np.zeros((5, n_features)), columns=feature_columns)
-                    
-                    def predict_fn(X_arr):
-                        if not isinstance(X_arr, pd.DataFrame):
-                            X_df = pd.DataFrame(X_arr, columns=feature_columns)
-                        else:
-                            X_df = X_arr
-                        preds = model.predict_proba(X_df)
-                        return preds[:, 1]
-
-                    kernel_exp = shap.KernelExplainer(predict_fn, bg)
-                    self._cached_kernel_explainers[cache_key] = kernel_exp
-                else:
-                    kernel_exp = self._cached_kernel_explainers[cache_key]
-
-                res = kernel_exp.shap_values(input_df, nsamples=100)
-                vec, bv = self.extract_shap_vector(res, n_features)
-                if not np.any(np.isnan(vec)) and not np.any(np.isinf(vec)):
-                    shap_values = vec
-                    explainer_type = "KernelExplainer (Probability Wrapper)"
-                    ev = kernel_exp.expected_value
-                    base_value = float(ev[1] if (hasattr(ev, '__len__') and len(ev) > 1) else (ev[0] if hasattr(ev, '__len__') else ev))
-                    method_used = "Method B (KernelExplainer Predict Proba Wrapper)"
-            except Exception as e:
-                logger.warning(f"Method B KernelExplainer failed: {e}")
-
-        # --- Tier 4: Method C - Explain underlying tree estimator in ensemble ---
+        # --- Tier 3: Method C - Explain underlying tree estimator in ensemble ---
         if shap_values is None:
             try:
                 sub_estimator = None
@@ -334,7 +321,13 @@ class RobustSHAPExplainer:
                     sub_est_name = "ChurnV2 Random Forest Base Model"
 
                 if sub_estimator is not None:
-                    tree_exp = shap.TreeExplainer(sub_estimator)
+                    cache_key = f"tree_{dataset_name}_{sub_est_name}"
+                    if cache_key not in self._cached_tree_explainers:
+                        tree_exp = shap.TreeExplainer(sub_estimator)
+                        self._cached_tree_explainers[cache_key] = tree_exp
+                    else:
+                        tree_exp = self._cached_tree_explainers[cache_key]
+
                     res = tree_exp.shap_values(input_df)
                     vec, bv = self.extract_shap_vector(res, n_features)
                     if not np.any(np.isnan(vec)) and not np.any(np.isinf(vec)):
@@ -345,7 +338,39 @@ class RobustSHAPExplainer:
                             base_value = float(ev[1] if (hasattr(ev, '__len__') and len(ev) > 1) else (ev[0] if hasattr(ev, '__len__') else ev))
                         method_used = f"Method C (TreeExplainer on {sub_est_name})"
             except Exception as e:
-                logger.exception("Method C TreeExplainer failed on underlying estimator")
+                logger.info(f"Method C TreeExplainer not directly applicable on underlying estimator: {e}")
+
+        # --- Tier 4: Method B - KernelExplainer on predict_proba wrapper (Fallback) ---
+        if shap_values is None:
+            try:
+                cache_key = f"kernel_{dataset_name}"
+                if cache_key not in self._cached_kernel_explainers:
+                    # Construct a representative small background baseline
+                    bg = pd.DataFrame(np.zeros((5, n_features)), columns=feature_columns)
+                    
+                    def predict_fn(X_arr):
+                        if not isinstance(X_arr, pd.DataFrame):
+                            X_df = pd.DataFrame(X_arr, columns=feature_columns)
+                        else:
+                            X_df = X_arr
+                        preds = model.predict_proba(X_df)
+                        return preds[:, 1]
+
+                    kernel_exp = shap.KernelExplainer(predict_fn, bg)
+                    self._cached_kernel_explainers[cache_key] = kernel_exp
+                else:
+                    kernel_exp = self._cached_kernel_explainers[cache_key]
+
+                res = kernel_exp.shap_values(input_df, nsamples=100)
+                vec, bv = self.extract_shap_vector(res, n_features)
+                if not np.any(np.isnan(vec)) and not np.any(np.isinf(vec)):
+                    shap_values = vec
+                    explainer_type = "KernelExplainer (Probability Wrapper)"
+                    ev = kernel_exp.expected_value
+                    base_value = float(ev[1] if (hasattr(ev, '__len__') and len(ev) > 1) else (ev[0] if hasattr(ev, '__len__') else ev))
+                    method_used = "Method B (KernelExplainer Predict Proba Wrapper)"
+            except Exception as e:
+                logger.warning(f"Method B KernelExplainer failed: {e}")
 
         # --- Check if all strategies failed ---
         if shap_values is None:
@@ -428,6 +453,187 @@ class RobustSHAPExplainer:
             "top_risk_factors": top_risk_factors[:5],
             "top_protective_factors": top_protective_factors[:5]
         }
+
+    def explain_batch(
+        self,
+        model: Any,
+        input_df: pd.DataFrame,
+        feature_columns: List[str],
+        precomputed_explainer: Optional[Any] = None,
+        raw_inputs_list: Optional[List[Dict[str, Any]]] = None,
+        dataset_name: str = "ds1"
+    ) -> List[Dict[str, Any]]:
+        """
+        Compute aligned, directional individual SHAP explanations for an entire batch of customers.
+        Optimized to use vectorized TreeExplainer evaluation where possible, falling back row-by-row.
+        """
+        n_features = len(feature_columns)
+        n_rows = len(input_df)
+        if not isinstance(input_df, pd.DataFrame):
+            input_df = pd.DataFrame(input_df, columns=feature_columns)
+        else:
+            input_df = input_df[feature_columns]
+
+        explainer_instance = precomputed_explainer
+        explainer_type = "Precomputed" if explainer_instance else "Unknown"
+        method_used = "Batch Explainer"
+        base_value = 0.5
+
+        # Check if precomputed explainer or ensemble tree estimator is available
+        if explainer_instance is None:
+            model_name = type(model).__name__.lower()
+            if any(t in model_name for t in ['xgb', 'lgbm', 'lightgbm', 'forest', 'tree', 'catboost']):
+                try:
+                    cache_key = f"tree_{dataset_name}_{model_name}"
+                    if cache_key not in self._cached_tree_explainers:
+                        explainer_instance = shap.TreeExplainer(model)
+                        self._cached_tree_explainers[cache_key] = explainer_instance
+                    else:
+                        explainer_instance = self._cached_tree_explainers[cache_key]
+                    explainer_type = "TreeExplainer"
+                    method_used = "Batch TreeExplainer (Direct)"
+                except Exception as e:
+                    logger.info(f"Direct TreeExplainer batch setup skipped: {e}")
+
+        if explainer_instance is None:
+            sub_estimator = None
+            sub_est_name = ""
+            if hasattr(model, 'xgb'):
+                sub_estimator = model.xgb
+                sub_est_name = "ChurnV2 XGBoost Base Model"
+            elif hasattr(model, 'lgbm'):
+                sub_estimator = model.lgbm
+                sub_est_name = "ChurnV2 LightGBM Base Model"
+            elif hasattr(model, 'rf'):
+                sub_estimator = model.rf
+                sub_est_name = "ChurnV2 Random Forest Base Model"
+            elif hasattr(model, 'named_estimators_'):
+                if 'xgb' in model.named_estimators_:
+                    sub_estimator = model.named_estimators_['xgb']
+                    sub_est_name = "Stacking XGBoost Base Model"
+                elif 'lgbm' in model.named_estimators_:
+                    sub_estimator = model.named_estimators_['lgbm']
+                    sub_est_name = "Stacking LightGBM Base Model"
+
+            if sub_estimator is not None:
+                cache_key = f"tree_{dataset_name}_{sub_est_name}"
+                if cache_key not in self._cached_tree_explainers:
+                    try:
+                        explainer_instance = shap.TreeExplainer(sub_estimator)
+                        self._cached_tree_explainers[cache_key] = explainer_instance
+                    except Exception as e:
+                        logger.warning(f"Could not build TreeExplainer for sub-estimator {sub_est_name}: {e}")
+                else:
+                    explainer_instance = self._cached_tree_explainers[cache_key]
+                if explainer_instance is not None:
+                    explainer_type = f"TreeExplainer ({sub_est_name})"
+                    method_used = f"Batch TreeExplainer on {sub_est_name}"
+
+        # Vectorized batch calculation if explainer_instance is available
+        batch_shap_matrix = None
+        if explainer_instance is not None:
+            try:
+                res = explainer_instance.shap_values(input_df)
+                if isinstance(res, list):
+                    batch_shap_matrix = np.asarray(res[1] if len(res) > 1 else res[0])
+                elif hasattr(res, 'values'):
+                    batch_shap_matrix = res.values
+                    if batch_shap_matrix.ndim == 3:
+                        batch_shap_matrix = batch_shap_matrix[:, :, 1]
+                elif hasattr(res, 'ndim') and res.ndim == 3:
+                    batch_shap_matrix = res[:, :, 1]
+                else:
+                    batch_shap_matrix = np.asarray(res)
+                
+                if hasattr(explainer_instance, 'expected_value'):
+                    ev = explainer_instance.expected_value
+                    base_value = float(ev[1] if (hasattr(ev, '__len__') and len(ev) > 1) else (ev[0] if hasattr(ev, '__len__') else ev))
+            except Exception as e:
+                logger.warning(f"Vectorized batch SHAP calculation failed: {e}. Falling back to row-by-row.")
+                batch_shap_matrix = None
+
+        batch_results = []
+        for i in range(n_rows):
+            raw_inp = raw_inputs_list[i] if raw_inputs_list and i < len(raw_inputs_list) else None
+            row_df = input_df.iloc[[i]]
+
+            if batch_shap_matrix is not None and i < len(batch_shap_matrix):
+                row_vec = np.asarray(batch_shap_matrix[i], dtype=float)
+                features_list = []
+                top_risk_factors = []
+                top_protective_factors = []
+
+                for idx, col in enumerate(feature_columns):
+                    val = float(row_vec[idx])
+                    bf = get_business_factor(col)
+                    display_name = bf.get("business_name") or get_display_name(col)
+                    actual_val = get_actual_feature_value(col, row_df, raw_inp)
+                    
+                    is_risk = val > 0
+                    direction = "increases_churn" if is_risk else "decreases_churn"
+                    impact = "risk" if is_risk else "protective"
+                    importance = abs(val)
+
+                    feat_obj = {
+                        "feature": col,
+                        "display_name": display_name,
+                        "category": bf.get("category", "General"),
+                        "is_actionable": bf.get("is_actionable", True),
+                        "business_meaning": bf.get("meaning", ""),
+                        "value": actual_val,
+                        "shap_value": round(val, 4),
+                        "importance": round(importance, 4),
+                        "impact": impact,
+                        "direction": direction,
+                    }
+                    features_list.append(feat_obj)
+
+                    if is_risk and importance > 0.0001:
+                        top_risk_factors.append({
+                            "feature": col,
+                            "display_name": display_name,
+                            "category": bf.get("category", "General"),
+                            "is_actionable": bf.get("is_actionable", True),
+                            "shap_value": round(val, 4),
+                            "value": actual_val,
+                            "importance": round(importance, 4)
+                        })
+                    elif not is_risk and importance > 0.0001:
+                        top_protective_factors.append({
+                            "feature": col,
+                            "display_name": display_name,
+                            "category": bf.get("category", "General"),
+                            "is_actionable": bf.get("is_actionable", True),
+                            "shap_value": round(val, 4),
+                            "value": actual_val,
+                            "importance": round(importance, 4)
+                        })
+
+                features_list.sort(key=lambda x: x["importance"], reverse=True)
+                top_risk_factors.sort(key=lambda x: x["importance"], reverse=True)
+                top_protective_factors.sort(key=lambda x: x["importance"], reverse=True)
+
+                batch_results.append({
+                    "available": True,
+                    "explainer_type": explainer_type,
+                    "method_used": method_used,
+                    "base_value": round(float(base_value), 4),
+                    "features": features_list,
+                    "top_risk_factors": top_risk_factors[:5],
+                    "top_protective_factors": top_protective_factors[:5]
+                })
+            else:
+                res_single = self.explain(
+                    model=model,
+                    input_df=row_df,
+                    feature_columns=feature_columns,
+                    precomputed_explainer=precomputed_explainer,
+                    raw_inputs=raw_inp,
+                    dataset_name=dataset_name
+                )
+                batch_results.append(res_single)
+
+        return batch_results
 
 def combine_shap_and_lime(
     shap_summary: Dict[str, Any],

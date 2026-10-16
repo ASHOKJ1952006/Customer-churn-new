@@ -58,7 +58,7 @@ const Landing = () => {
     {
       id: 'dashboard',
       title: 'Dashboard',
-      description: 'View prediction history and manage high-risk customers',
+      description: 'View prediction history and individual explainability',
       icon: '📈',
       route: '/dashboard'
     },

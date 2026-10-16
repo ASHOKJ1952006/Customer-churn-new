@@ -1,7 +1,7 @@
 {
-  "model_version": "churn_v2",
+  "model_version": "churn_v2_unified_benchmark",
   "deployed_model": "Stacking Ensemble",
-  "dataset": "IBM Telco Customer Churn (Balanced 50/50 Split)",
+  "dataset": "IBM Telco Customer Churn (Balanced 50/50 Split - Unified Fair Benchmark)",
   "test_records": 1600,
   "models": [
     {
@@ -11,28 +11,28 @@
       "color": "#2563eb",
       "is_deployed": false,
       "description": "Balanced Bagging Trees with max_depth=12.",
-      "accuracy": 0.95375,
-      "precision": 0.9459459459459459,
-      "recall": 0.9625,
-      "f1": 0.9541511771995044,
+      "accuracy": 0.955,
+      "precision": 0.9595959595959596,
+      "recall": 0.95,
+      "f1": 0.9547738693467337,
       "roc_auc": 0.986871875,
       "pr_auc": 0.9831214911972155,
       "brier": 0.036941363398045574,
-      "threshold": 0.38000000000000006,
+      "threshold": 0.5,
       "confusion_matrix": [
         [
-          756,
-          44
+          768,
+          32
         ],
         [
-          30,
-          770
+          40,
+          760
         ]
       ],
-      "tn": 756,
-      "fp": 44,
-      "fn": 30,
-      "tp": 770
+      "tn": 768,
+      "fp": 32,
+      "fn": 40,
+      "tp": 760
     },
     {
       "name": "XGBoost",
@@ -41,28 +41,28 @@
       "color": "#d97706",
       "is_deployed": false,
       "description": "Gradient Boosting with L1/L2 regularization and tree subsampling.",
-      "accuracy": 0.94875,
-      "precision": 0.9253554502369669,
-      "recall": 0.97625,
-      "f1": 0.9501216545012166,
+      "accuracy": 0.951875,
+      "precision": 0.9581749049429658,
+      "recall": 0.945,
+      "f1": 0.9515418502202643,
       "roc_auc": 0.9900625000000001,
       "pr_auc": 0.9889893266549511,
       "brier": 0.034702133387327194,
-      "threshold": 0.29000000000000004,
+      "threshold": 0.5,
       "confusion_matrix": [
         [
-          737,
-          63
+          767,
+          33
         ],
         [
-          19,
-          781
+          44,
+          756
         ]
       ],
-      "tn": 737,
-      "fp": 63,
-      "fn": 19,
-      "tp": 781
+      "tn": 767,
+      "fp": 33,
+      "fn": 44,
+      "tp": 756
     },
     {
       "name": "LightGBM",
@@ -71,28 +71,28 @@
       "color": "#059669",
       "is_deployed": false,
       "description": "Leaf-wise Gradient Boosting with depth constraints.",
-      "accuracy": 0.95,
-      "precision": 0.9337349397590361,
-      "recall": 0.96875,
-      "f1": 0.950920245398773,
+      "accuracy": 0.95375,
+      "precision": 0.9560301507537688,
+      "recall": 0.95125,
+      "f1": 0.9536340852130326,
       "roc_auc": 0.9894578125000001,
       "pr_auc": 0.9882097309893262,
       "brier": 0.03529841845946926,
-      "threshold": 0.32000000000000006,
+      "threshold": 0.5,
       "confusion_matrix": [
         [
-          745,
-          55
+          765,
+          35
         ],
         [
-          25,
-          775
+          39,
+          761
         ]
       ],
-      "tn": 745,
-      "fp": 55,
-      "fn": 25,
-      "tp": 775
+      "tn": 765,
+      "fp": 35,
+      "fn": 39,
+      "tp": 761
     },
     {
       "name": "Stacking Ensemble",
@@ -100,29 +100,29 @@
       "type": "ensemble",
       "color": "#7c3aed",
       "is_deployed": true,
-      "description": "Stacking (RF + XGB + LGBM) via Logistic Regression meta-learner with calibrated threshold.",
-      "accuracy": 0.954375,
-      "precision": 0.947109471094711,
-      "recall": 0.9625,
-      "f1": 0.9547427154370738,
-      "roc_auc": 0.9894171875,
-      "pr_auc": 0.9879737146127398,
-      "brier": 0.036164489959368294,
-      "threshold": 0.26000000000000006,
+      "description": "Optimized Stacking Ensemble (RF + XGB + LGBM) via Logit Meta-Learner (Unified Fair Benchmark at tau=0.50).",
+      "accuracy": 0.955625,
+      "precision": 0.9573400250941029,
+      "recall": 0.95375,
+      "f1": 0.9555416405760802,
+      "roc_auc": 0.9896296874999999,
+      "pr_auc": 0.9879959739056896,
+      "brier": 0.0346274673408276,
+      "threshold": 0.5,
       "confusion_matrix": [
         [
-          757,
-          43
+          766,
+          34
         ],
         [
-          30,
-          770
+          37,
+          763
         ]
       ],
-      "tn": 757,
-      "fp": 43,
-      "fn": 30,
-      "tp": 770
+      "tn": 766,
+      "fp": 34,
+      "fn": 37,
+      "tp": 763
     }
   ],
   "metric_keys": [
@@ -141,6 +141,6 @@
     "roc_auc": "ROC-AUC",
     "brier": "Brier Score"
   },
-  "generated_at": "2026-09-22T12:01:55.766182",
+  "generated_at": "2026-10-14T15:59:43.892474",
   "is_fallback": false
 }

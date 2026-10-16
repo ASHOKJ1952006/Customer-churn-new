@@ -1,0 +1,23 @@
+customer_id,churn_probability,risk_level,prediction,top_factors,recommended_action,plain_explanation
+XL-001,0.9994,Critical,1,Customer Tenure (Months Active); Monthlycharges X Ismonthtomonth; Acute High-Risk Profile (M2M + Electronic Check),Enroll customer into the VIP Early-Tenure Onboarding program with a dedicated care check-in call and welcome service verification.,"The main factors increasing churn risk are:
+• How long they have been a customer very strongly increases churn risk.
+• Monthlycharges x ismonthtomonth very strongly increases churn risk.
+• High-risk profile (month-to-month + electronic check) very strongly increases churn risk.
+
+Overall, the customer's profile indicates elevated churn risk."
+XL-002,0.245,Medium,0,Fiber Optic Internet Tier; Charge Spike Ratio; Two-Year Contract Commitment,Send personalized customer appreciation communication with an exclusive no-commitment speed boost or loyalty reward voucher.,"The main factor increasing churn risk is:
+• Fiber optic internet very strongly increases churn risk.
+
+The main factors reducing churn risk are:
+• Monthlycharges x ismonthtomonth very strongly reduces churn risk.
+• Monthly bill amount very strongly reduces churn risk.
+
+Overall, the customer's profile shows competing factors that influence their churn probability."
+XL-003,0.1994,Low,0,Customer Tenure (Months Active); Fiber Optic Internet Tier; Non-linear Lifecycle Maturity,Enroll customer into the VIP Early-Tenure Onboarding program with a dedicated care check-in call and welcome service verification.,"The main factor increasing churn risk is:
+• How long they have been a customer very strongly increases churn risk.
+
+The main factors reducing churn risk are:
+• Two-year contract very strongly reduces churn risk.
+• Monthly bill amount very strongly reduces churn risk.
+
+Overall, the customer's profile shows competing factors that influence their churn probability."

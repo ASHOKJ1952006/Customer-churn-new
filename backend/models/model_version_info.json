@@ -1,9 +1,9 @@
 {
-  "version": "churn_v2",
+  "version": "churn_v2_unified",
   "deployed_model": "Stacking Ensemble",
-  "dataset": "IBM Telco Customer Churn (Balanced 50/50 Split)",
+  "dataset": "IBM Telco Customer Churn (Balanced 50/50 Split - Unified tau=0.50)",
   "features": 27,
-  "threshold": 0.26000000000000006,
+  "threshold": 0.5,
   "models": [
     "Random Forest",
     "XGBoost",
@@ -11,8 +11,8 @@
     "Stacking Ensemble"
   ],
   "status": "active",
-  "accuracy": 0.954375,
-  "recall": 0.9625,
-  "f1": 0.9547427154370738,
-  "brier": 0.036164489959368294
+  "accuracy": 0.955625,
+  "recall": 0.95375,
+  "f1": 0.9555416405760802,
+  "brier": 0.0346274673408276
 }

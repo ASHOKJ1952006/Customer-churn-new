@@ -6,7 +6,7 @@ Stores batch upload results and single predictions across app sessions.
 import sqlite3
 import pandas as pd
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 import os
 
@@ -111,7 +111,13 @@ class ChurnDatabase:
                 ("recommended_action_2", "TEXT"),
                 ("recommended_action_3", "TEXT"),
                 ("recommendation_priority", "TEXT"),
-                ("recommendation_confidence", "TEXT")
+                ("recommendation_confidence", "TEXT"),
+                ("explanation", "TEXT"),
+                ("shap_data", "TEXT"),
+                ("protective_factors", "TEXT"),
+                ("lime_data", "TEXT"),
+                ("recommendations", "TEXT"),
+                ("explanation_status", "TEXT DEFAULT 'available'")
             ]
             
             for col_name, col_type in new_columns:
@@ -121,8 +127,50 @@ class ChurnDatabase:
                     except Exception as e:
                         pass
             
+            # Migration-safe column checks for batch predictions explainability
+            cursor.execute("PRAGMA table_info(batch_predictions)")
+            existing_batch_cols = [row[1] for row in cursor.fetchall()]
+            
+            new_batch_columns = [
+                ("prediction", "INTEGER DEFAULT 0"),
+                ("explanation", "TEXT"),
+                ("shap_data", "TEXT"),
+                ("protective_factors", "TEXT"),
+                ("lime_data", "TEXT"),
+                ("recommendations", "TEXT"),
+                ("major_churn_drivers", "TEXT"),
+                ("input_features", "TEXT"),
+                ("explanation_status", "TEXT DEFAULT 'available'")
+            ]
+            
+            for col_name, col_type in new_batch_columns:
+                if col_name not in existing_batch_cols:
+                    try:
+                        cursor.execute(f"ALTER TABLE batch_predictions ADD COLUMN {col_name} {col_type}")
+                    except Exception as e:
+                        pass
+            
             conn.commit()
     
+    @staticmethod
+    def _safe_serialize(val):
+        """Serialize data to JSON safely handling numpy and non-standard types."""
+        if val is None:
+            return None
+        if isinstance(val, str):
+            return val
+        import json
+        def default_serializer(o):
+            if hasattr(o, 'item'):
+                return o.item()
+            if hasattr(o, 'tolist'):
+                return o.tolist()
+            return str(o)
+        try:
+            return json.dumps(val, default=default_serializer)
+        except Exception:
+            return str(val)
+
     def add_single_prediction(
         self,
         customer_id: str,
@@ -139,7 +187,13 @@ class ChurnDatabase:
         recommended_action_2: Optional[str] = None,
         recommended_action_3: Optional[str] = None,
         recommendation_priority: Optional[str] = None,
-        recommendation_confidence: Optional[str] = None
+        recommendation_confidence: Optional[str] = None,
+        explanation: Optional[str] = None,
+        shap_data: Optional[Any] = None,
+        protective_factors: Optional[Any] = None,
+        lime_data: Optional[Any] = None,
+        recommendations: Optional[Any] = None,
+        explanation_status: str = "available"
     ) -> int:
         """Add a single customer prediction to database with extended decision support fields."""
         # Auto-fill individual factor and action slots if not explicitly passed
@@ -151,6 +205,11 @@ class ChurnDatabase:
         ra2 = recommended_action_2
         ra3 = recommended_action_3
         
+        serialized_shap = self._safe_serialize(shap_data)
+        serialized_protective = self._safe_serialize(protective_factors)
+        serialized_lime = self._safe_serialize(lime_data)
+        serialized_recs = self._safe_serialize(recommendations)
+        
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -158,15 +217,16 @@ class ChurnDatabase:
                 (customer_id, churn_probability, risk_level, top_factors, recommended_action, input_features,
                  prediction, top_factor_1, top_factor_2, top_factor_3,
                  recommended_action_1, recommended_action_2, recommended_action_3,
-                 recommendation_priority, recommendation_confidence)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 recommendation_priority, recommendation_confidence,
+                 explanation, shap_data, protective_factors, lime_data, recommendations, explanation_status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 customer_id,
                 churn_probability,
                 risk_level,
                 ", ".join(top_factors) if isinstance(top_factors, list) else str(top_factors),
                 recommended_action,
-                str(input_features),
+                self._safe_serialize(input_features),
                 prediction,
                 tf1,
                 tf2,
@@ -175,7 +235,13 @@ class ChurnDatabase:
                 ra2,
                 ra3,
                 recommendation_priority or "HIGH",
-                recommendation_confidence or "HIGH"
+                recommendation_confidence or "HIGH",
+                explanation,
+                serialized_shap,
+                serialized_protective,
+                serialized_lime,
+                serialized_recs,
+                explanation_status
             ))
             
             # Add to risk queue if high or critical risk
@@ -200,7 +266,8 @@ class ChurnDatabase:
         batch_id: str,
         predictions: List[Dict]
     ) -> None:
-        """Add batch predictions to database."""
+        """Add batch predictions to database with full explainability and recommendations."""
+        import uuid
         with self._get_connection() as conn:
             cursor = conn.cursor()
             
@@ -210,21 +277,53 @@ class ChurnDatabase:
             total_prob = 0
             
             for pred in predictions:
+                prob = float(pred.get('churn_probability', pred.get('probability', 0.0)))
+                risk = pred.get('risk_level', 'Low')
+                pred_val = int(pred.get('prediction', 1 if risk in ['High', 'Critical'] else 0))
+                
+                raw_tf = pred.get('top_factors', [])
+                if isinstance(raw_tf, list):
+                    tf_str = ", ".join([f if isinstance(f, str) else f.get('name', f.get('factor', str(f))) for f in raw_tf])
+                else:
+                    tf_str = str(raw_tf)
+                
+                explanation = pred.get('explanation')
+                shap_data = self._safe_serialize(pred.get('shap'))
+                protective_factors = self._safe_serialize(pred.get('protective_factors', pred.get('top_protective_factors')))
+                lime_data = self._safe_serialize(pred.get('lime'))
+                recs = self._safe_serialize(pred.get('recommendations'))
+                major_drivers = self._safe_serialize(pred.get('major_churn_drivers', pred.get('major_factors')))
+                input_feat = self._safe_serialize(pred.get('input_features'))
+                status = pred.get('explanation_status', 'available')
+                cid = str(pred.get('customer_id', f'cust_{uuid.uuid4().hex[:6]}'))
+                action = pred.get('recommended_action', 'Review customer profile')
+                
                 cursor.execute("""
                     INSERT INTO batch_predictions
-                    (batch_id, customer_id, churn_probability, risk_level, top_factors, recommended_action)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    (batch_id, customer_id, churn_probability, risk_level, top_factors, recommended_action,
+                     prediction, explanation, shap_data, protective_factors, lime_data, recommendations,
+                     major_churn_drivers, input_features, explanation_status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     batch_id,
-                    pred['customer_id'],
-                    pred['churn_probability'],
-                    pred['risk_level'],
-                    ", ".join(pred['top_factors']),
-                    pred['recommended_action']
+                    cid,
+                    prob,
+                    risk,
+                    tf_str,
+                    action,
+                    pred_val,
+                    explanation,
+                    shap_data,
+                    protective_factors,
+                    lime_data,
+                    recs,
+                    major_drivers,
+                    input_feat,
+                    status
                 ))
                 
                 # Count risk levels
-                if pred['risk_level'] == 'High':
+                if risk in ['High', 'Critical']:
                     high_risk += 1
                     # Add to risk queue
                     cursor.execute("""
@@ -232,18 +331,18 @@ class ChurnDatabase:
                         (customer_id, churn_probability, risk_level, top_factors, recommended_action)
                         VALUES (?, ?, ?, ?, ?)
                     """, (
-                        pred['customer_id'],
-                        pred['churn_probability'],
-                        pred['risk_level'],
-                        ", ".join(pred['top_factors']),
-                        pred['recommended_action']
+                        cid,
+                        prob,
+                        risk,
+                        tf_str,
+                        action
                     ))
-                elif pred['risk_level'] == 'Medium':
+                elif risk == 'Medium':
                     medium_risk += 1
                 else:
                     low_risk += 1
                 
-                total_prob += pred['churn_probability']
+                total_prob += prob
             
             # Add batch metadata
             cursor.execute("""

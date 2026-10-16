@@ -1,0 +1,10 @@
+{
+    "total_actual_churners": 800,
+    "fn_xgb_count": 44,
+    "fn_stacking_baseline_count": 38,
+    "fn_stacking_optimized_count": 37,
+    "shared_fn_count": 37,
+    "rescued_by_stacking_from_xgb_fn": 7,
+    "missed_by_stacking_caught_by_xgb": 0,
+    "net_churner_detection_gain_over_xgb": 7
+}

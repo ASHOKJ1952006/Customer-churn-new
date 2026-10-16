@@ -54,6 +54,31 @@ app.add_middleware(
 # Initialize database
 db = ChurnDatabase()
 
+import math
+
+def sanitize_json_output(obj):
+    """
+    Recursively sanitize objects so that NaN, Infinity, -Infinity, numpy types, 
+    and pandas NA values become None or JSON-compliant standard types.
+    """
+    if obj is None:
+        return None
+    if isinstance(obj, (float, np.floating)):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return float(obj)
+    if isinstance(obj, (int, np.integer)):
+        return int(obj)
+    if isinstance(obj, (bool, np.bool_)):
+        return bool(obj)
+    if isinstance(obj, dict):
+        return {str(k): sanitize_json_output(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, np.ndarray, pd.Series)):
+        return [sanitize_json_output(v) for v in obj]
+    if hasattr(pd, 'isna') and pd.isna(obj):
+        return None
+    return obj
+
 def load_model_file(filename: str):
     """Safely locate and load serialized model artifacts across candidate directories."""
     candidate_paths = [
@@ -81,7 +106,15 @@ except Exception as e:
     ds1_scaler = load_model_file('ds1calcv_scaler.pkl')
     ds1_feature_columns = load_model_file('ds1calcv_feature_columns.pkl')
     ds1_best_threshold = load_model_file('ds1calcv_best_threshold.pkl')
-ds1_explainer = None
+try:
+    if hasattr(ds1_model, 'xgb'):
+        ds1_explainer = shap.TreeExplainer(ds1_model.xgb)
+    else:
+        ds1_explainer = shap.TreeExplainer(ds1_model)
+    logger.info("Successfully initialized ds1_explainer.")
+except Exception as e:
+    logger.warning(f"Could not precompute ds1_explainer: {e}")
+    ds1_explainer = None
 
 # --- Load Dataset 2 models (Telecom, Optimized) ---
 ds2_model = load_model_file('ds2optuna_churn_model.pkl')
@@ -256,20 +289,40 @@ def preprocess_raw_dataframe(raw_df):
     
     # For Dataset 1, apply churn_v2 feature engineering
     if current_dataset == "ds1":
-        customer_ids = df.get('customerID', [f"cust_{i}" for i in range(len(df))]).tolist()
+        if 'customerID' in df.columns:
+            customer_ids = df['customerID'].astype(str).tolist()
+        elif 'customer_id' in df.columns:
+            customer_ids = df['customer_id'].astype(str).tolist()
+        elif 'CustomerID' in df.columns:
+            customer_ids = df['CustomerID'].astype(str).tolist()
+        elif 'id' in df.columns:
+            customer_ids = df['id'].astype(str).tolist()
+        else:
+            customer_ids = [f"cust_{i+1}" for i in range(len(df))]
+
         df_encoded = engineer_features_v2(df)
         for col in feature_columns:
             if col not in df_encoded.columns:
                 df_encoded[col] = 0.0
-        df_encoded = df_encoded[feature_columns].astype(float)
+        df_encoded = df_encoded[feature_columns].astype(float).fillna(0.0)
         scale_cols, _ = get_churn_v2_feature_names()
         valid_scale_cols = [c for c in scale_cols if c in df_encoded.columns]
         if hasattr(scaler, 'transform') and valid_scale_cols:
             df_encoded[valid_scale_cols] = scaler.transform(df_encoded[valid_scale_cols])
+        df_encoded = df_encoded.fillna(0.0).replace([np.inf, -np.inf], 0.0)
         return df_encoded, customer_ids
     else:
         # Dataset 2 preprocessing (simplified)
-        customer_ids = df.get('mobile_number', [f"cust_{i}" for i in range(len(df))]).tolist()
+        if 'mobile_number' in df.columns:
+            customer_ids = df['mobile_number'].astype(str).tolist()
+        elif 'customer_id' in df.columns:
+            customer_ids = df['customer_id'].astype(str).tolist()
+        elif 'customerID' in df.columns:
+            customer_ids = df['customerID'].astype(str).tolist()
+        elif 'id' in df.columns:
+            customer_ids = df['id'].astype(str).tolist()
+        else:
+            customer_ids = [f"cust_{i+1}" for i in range(len(df))]
         return df[feature_columns].astype(float), customer_ids
 
 # Pydantic models for request/response
@@ -419,12 +472,18 @@ async def predict_single(request: SinglePredictRequest):
                 recommended_action_2=recs[1]["action"] if len(recs) > 1 else None,
                 recommended_action_3=recs[2]["action"] if len(recs) > 2 else None,
                 recommendation_priority=rec_res.get("management_summary", {}).get("priority", "HIGH"),
-                recommendation_confidence=rec_res.get("explanation_confidence", "HIGH")
+                recommendation_confidence=rec_res.get("explanation_confidence", "HIGH"),
+                explanation=explanation,
+                shap_data=shap_res,
+                protective_factors=rec_res.get("protective_factors", shap_res.get("top_protective_factors", [])),
+                lime_data=lime_res,
+                recommendations=recs,
+                explanation_status="available" if shap_res.get("available") else "unavailable"
             )
         except Exception as db_error:
             logger.warning(f"Database error (non-critical): {db_error}")
         
-        return {
+        return sanitize_json_output({
             # Core prediction metrics
             "prediction": 1 if prob >= float(best_threshold) else 0,
             "probability": prob,
@@ -460,7 +519,7 @@ async def predict_single(request: SinglePredictRequest):
             "top_protective_factors": shap_res.get("top_protective_factors", []),
             "risk_drivers": rec_res.get("risk_drivers", []),
             "protective_drivers": rec_res.get("protective_drivers", [])
-        }
+        })
     except Exception as e:
         import traceback
         logger.exception(f"Error in predict_single: {str(e)}")
@@ -469,51 +528,120 @@ async def predict_single(request: SinglePredictRequest):
 
 @app.post("/api/predict/batch")
 async def predict_batch(file: UploadFile = File(...), dataset: str = Form("ds1")):
-    """Predict churn for batch CSV upload"""
+    """Predict churn for batch CSV or Excel upload with full explainability"""
     try:
         # Set active dataset
         set_active_dataset(dataset)
         
-        # Read CSV
-        df = pd.read_csv(file.file)
-        
+        # Read file supporting CSV, XLSX, and XLS
+        filename = (file.filename or "").lower()
+        file_bytes = await file.read()
+        import io
+        if filename.endswith(".xlsx") or filename.endswith(".xls"):
+            try:
+                df = pd.read_excel(io.BytesIO(file_bytes))
+            except Exception as e_xl:
+                logger.error(f"Error reading Excel file: {e_xl}")
+                raise HTTPException(status_code=400, detail=f"Failed to parse Excel file: {str(e_xl)}")
+        else:
+            try:
+                df = pd.read_csv(io.BytesIO(file_bytes))
+            except Exception:
+                try:
+                    df = pd.read_excel(io.BytesIO(file_bytes))
+                except Exception:
+                    df = pd.read_csv(io.BytesIO(file_bytes), encoding="latin1")
+
+        if df.empty:
+            raise HTTPException(status_code=400, detail="The uploaded file contains no data.")
+
+        # Clean NaN in raw records
+        clean_df = df.where(pd.notnull(df), None)
+        raw_inputs_list = [sanitize_json_output(r) for r in clean_df.to_dict('records')]
+
         # Preprocess
         X_batch, customer_ids = preprocess_raw_dataframe(df)
         
         # Predict
         probs = model.predict_proba(X_batch)[:, 1]
+        probs = np.nan_to_num(probs, nan=0.5)
         
-        # Get SHAP values
-        if explainer:
-            shap_vals_batch_result = explainer.shap_values(X_batch)
-            if isinstance(shap_vals_batch_result, list):
-                shap_vals_batch = shap_vals_batch_result[1] if len(shap_vals_batch_result) > 1 else shap_vals_batch_result[0]
-            elif len(shap_vals_batch_result.shape) == 3:
-                shap_vals_batch = shap_vals_batch_result[:, :, 1]
-            else:
-                shap_vals_batch = shap_vals_batch_result
-        else:
-            shap_vals_batch = None
+        # Compute vectorized batch SHAP explanations
+        batch_shap_results = robust_explainer.explain_batch(
+            model=model,
+            input_df=X_batch,
+            feature_columns=feature_columns,
+            precomputed_explainer=explainer,
+            raw_inputs_list=raw_inputs_list,
+            dataset_name=dataset
+        )
         
-        # Process results
+        # Process results with full explainability
+        text_explainer = SHAPToTextExplainer()
         results = []
         for i in range(len(X_batch)):
-            if shap_vals_batch is not None:
-                row_shap = pd.Series(shap_vals_batch[i], index=feature_columns)
-                top3 = row_shap.sort_values(ascending=False).head(3).index.tolist()
-            else:
-                top3 = ["SHAP unavailable"]
-            
-            prob = probs[i]
+            prob = float(probs[i])
             risk = risk_label(prob)
-            action = top_factors_to_action(top3)
+            cid = str(customer_ids[i]) if i < len(customer_ids) else f"cust_{i}"
+            shap_res = batch_shap_results[i] if i < len(batch_shap_results) else {"available": False}
+            raw_inp = raw_inputs_list[i] if i < len(raw_inputs_list) else {}
             
+            # Plain English explanation
+            if shap_res.get("available") and shap_res.get("features"):
+                try:
+                    shap_vals_arr = np.array([f["shap_value"] for f in shap_res["features"]])
+                    explanation = text_explainer.generate_explanation(
+                        shap_vals_arr,
+                        [f["feature"] for f in shap_res["features"]],
+                        feature_values=None,
+                        top_n=3
+                    )
+                except Exception:
+                    explanation = "Primary drivers identified from model SHAP analysis."
+            else:
+                explanation = "SHAP explanation temporarily unavailable for this customer."
+
+            # Dynamic recommendations with decision support engine
+            try:
+                rec_res = recommendation_engine.generate_recommendations(
+                    inputs=raw_inp,
+                    probability=prob,
+                    threshold=float(best_threshold),
+                    shap_summary=shap_res,
+                    predict_fn=predict_probability
+                )
+                action = rec_res.get("primary_action") or top_factors_to_action([f["feature"] for f in shap_res.get("top_risk_factors", [])])
+                recs = rec_res.get("recommendations", [])
+                major_drivers = rec_res.get("major_churn_drivers", [])
+                protective_factors = rec_res.get("protective_factors", shap_res.get("top_protective_factors", []))
+            except Exception as e:
+                logger.warning(f"Batch recommendation error for row {i}: {e}")
+                action = top_factors_to_action([f["feature"] for f in shap_res.get("top_risk_factors", [])])
+                recs = []
+                major_drivers = []
+                protective_factors = shap_res.get("top_protective_factors", [])
+
+            top_factors_list = [d["factor"] for d in major_drivers[:3]] if major_drivers else (
+                [f["display_name"] for f in shap_res.get("top_risk_factors", [])[:3]]
+            )
+            if not top_factors_list:
+                top_factors_list = [f["name"] for f in shap_res.get("features", [])[:3]] or ["Profile characteristics"]
+
             results.append({
-                "customer_id": customer_ids[i] if i < len(customer_ids) else f"cust_{i}",
-                "probability": float(prob),
+                "customer_id": cid,
+                "probability": prob,
+                "churn_probability": prob,
                 "risk_level": risk,
-                "top_factors": top3,
-                "recommended_action": action
+                "prediction": 1 if prob >= float(best_threshold) else 0,
+                "top_factors": top_factors_list,
+                "recommended_action": action,
+                "explanation": explanation,
+                "shap": shap_res,
+                "protective_factors": protective_factors,
+                "major_churn_drivers": major_drivers,
+                "recommendations": recs,
+                "input_features": raw_inp,
+                "explanation_status": "available" if shap_res.get("available") else "unavailable"
             })
         
         # Organizational Aggregations (Requirement 24)
@@ -564,26 +692,28 @@ async def predict_batch(file: UploadFile = File(...), dataset: str = Form("ds1")
         # Generate batch ID
         batch_id = str(uuid.uuid4())
         
-        # Save results to CSV
-        results_df = pd.DataFrame(results)
+        # Save results to CSV (including explanation and top factors)
+        csv_rows = []
+        for r in results:
+            csv_rows.append({
+                "customer_id": r["customer_id"],
+                "churn_probability": round(r["probability"], 4),
+                "risk_level": r["risk_level"],
+                "prediction": r["prediction"],
+                "top_factors": "; ".join(r["top_factors"]) if isinstance(r["top_factors"], list) else str(r["top_factors"]),
+                "recommended_action": r["recommended_action"],
+                "plain_explanation": r["explanation"]
+            })
+        results_df = pd.DataFrame(csv_rows)
         results_df.to_csv(f"batch_results_{batch_id}.csv", index=False)
         
         # Save to database
         try:
-            db.add_batch_predictions(batch_id, [
-                {
-                    'customer_id': r["customer_id"],
-                    'churn_probability': r["probability"],
-                    'risk_level': r["risk_level"],
-                    'top_factors': r["top_factors"],
-                    'recommended_action': r["recommended_action"]
-                }
-                for r in results
-            ])
+            db.add_batch_predictions(batch_id, results)
         except Exception as db_error:
             print(f"Database error (non-critical): {db_error}")
         
-        return {
+        response_data = {
             "batch_id": batch_id,
             "summary": {
                 "total": len(results),
@@ -595,6 +725,7 @@ async def predict_batch(file: UploadFile = File(...), dataset: str = Form("ds1")
             },
             "results": results
         }
+        return sanitize_json_output(response_data)
     except Exception as e:
         import traceback
         print(f"Error in predict_batch: {str(e)}")
@@ -683,48 +814,156 @@ async def whatif_simulate(request: WhatIfRequest):
 
 @app.get("/api/dashboard/history")
 async def get_history():
-    """Get prediction history from database (both single and batch)"""
+    """Get prediction history from database (both single and batch) with full explainability"""
     try:
+        import json as _json_parser
+        import math
+        
+        def clean_json_val(obj):
+            if obj is None:
+                return None
+            if isinstance(obj, float):
+                if math.isnan(obj) or math.isinf(obj):
+                    return None
+                return obj
+            if isinstance(obj, dict):
+                return {str(k): clean_json_val(v) for k, v in obj.items()}
+            if isinstance(obj, (list, tuple)):
+                return [clean_json_val(v) for v in obj]
+            return obj
+
         # Get single predictions
         single_df = db.get_single_predictions(limit=100)
-        single_records = single_df.to_dict('records') if not single_df.empty else []
+        if not single_df.empty:
+            single_records = single_df.where(pd.notnull(single_df), None).to_dict('records')
+        else:
+            single_records = []
         
         # Get batch predictions
         batch_df = db.get_batch_predictions(limit=100)
-        batch_records = batch_df.to_dict('records') if not batch_df.empty else []
+        if not batch_df.empty:
+            batch_records = batch_df.where(pd.notnull(batch_df), None).to_dict('records')
+        else:
+            batch_records = []
         
-        # Combine and sort by timestamp
+        def safe_json_parse(val, fallback=None):
+            if val is None:
+                return fallback
+            if isinstance(val, (dict, list)):
+                return val
+            if isinstance(val, str):
+                val_trimmed = val.strip()
+                if not val_trimmed:
+                    return fallback
+                try:
+                    return _json_parser.loads(val_trimmed)
+                except Exception:
+                    return fallback if fallback is not None else val
+            return fallback
+
         all_records = []
         for record in single_records:
+            shap_obj = safe_json_parse(record.get('shap_data'), {})
+            recs_obj = safe_json_parse(record.get('recommendations'), [])
+            prot_obj = safe_json_parse(record.get('protective_factors'), [])
+            input_feat = safe_json_parse(record.get('input_features'), {})
+            expl = record.get('explanation')
+            status = record.get('explanation_status')
+            if not status:
+                status = 'available' if (expl or (isinstance(shap_obj, dict) and shap_obj.get('available'))) else 'legacy_unavailable'
+
+            top_factors_val = record.get('top_factors')
+            if isinstance(top_factors_val, str) and (',' in top_factors_val or '[' in top_factors_val):
+                if top_factors_val.startswith('['):
+                    try:
+                        top_factors_val = _json_parser.loads(top_factors_val)
+                    except Exception:
+                        top_factors_val = [x.strip() for x in top_factors_val.split(',')]
+                else:
+                    top_factors_val = [x.strip() for x in top_factors_val.split(',')]
+            elif not isinstance(top_factors_val, list):
+                top_factors_val = [str(top_factors_val)] if top_factors_val else []
+
+            prob_raw = record.get('churn_probability')
+            prob_val = float(prob_raw) if prob_raw is not None else 0.0
+            pred_raw = record.get('prediction')
+            pred_val = int(pred_raw) if pred_raw is not None else (1 if record.get('risk_level') in ['High', 'Critical'] else 0)
+
             all_records.append({
-                'customer_id': record.get('customer_id'),
-                'probability': record.get('churn_probability'),
-                'risk_level': record.get('risk_level'),
-                'top_factors': record.get('top_factors'),
-                'recommended_action': record.get('recommended_action'),
-                'timestamp': record.get('timestamp'),
-                'type': 'single'
+                'id': record.get('id'),
+                'customer_id': str(record.get('customer_id') or ''),
+                'probability': prob_val,
+                'churn_probability': prob_val,
+                'risk_level': str(record.get('risk_level') or 'Low'),
+                'prediction': pred_val,
+                'top_factors': top_factors_val,
+                'recommended_action': str(record.get('recommended_action') or ''),
+                'explanation': expl if expl else None,
+                'shap': shap_obj if isinstance(shap_obj, dict) else {},
+                'protective_factors': prot_obj if isinstance(prot_obj, list) else [],
+                'recommendations': recs_obj if isinstance(recs_obj, list) else [],
+                'input_features': input_feat if isinstance(input_feat, dict) else {},
+                'timestamp': str(record.get('timestamp') or ''),
+                'type': 'single',
+                'explanation_status': str(status),
+                'has_explanation': bool(expl or (isinstance(shap_obj, dict) and (shap_obj.get('available') or shap_obj.get('features'))))
             })
         
         for record in batch_records:
+            shap_obj = safe_json_parse(record.get('shap_data'), {})
+            recs_obj = safe_json_parse(record.get('recommendations'), [])
+            prot_obj = safe_json_parse(record.get('protective_factors'), [])
+            input_feat = safe_json_parse(record.get('input_features'), {})
+            expl = record.get('explanation')
+            status = record.get('explanation_status')
+            if not status:
+                status = 'available' if (expl or (isinstance(shap_obj, dict) and shap_obj.get('available'))) else 'legacy_unavailable'
+
+            top_factors_val = record.get('top_factors')
+            if isinstance(top_factors_val, str) and (',' in top_factors_val or '[' in top_factors_val):
+                if top_factors_val.startswith('['):
+                    try:
+                        top_factors_val = _json_parser.loads(top_factors_val)
+                    except Exception:
+                        top_factors_val = [x.strip() for x in top_factors_val.split(',')]
+                else:
+                    top_factors_val = [x.strip() for x in top_factors_val.split(',')]
+            elif not isinstance(top_factors_val, list):
+                top_factors_val = [str(top_factors_val)] if top_factors_val else []
+
+            prob_raw = record.get('churn_probability')
+            prob_val = float(prob_raw) if prob_raw is not None else 0.0
+            pred_raw = record.get('prediction')
+            pred_val = int(pred_raw) if pred_raw is not None else (1 if record.get('risk_level') in ['High', 'Critical'] else 0)
+
             all_records.append({
-                'customer_id': record.get('customer_id'),
-                'probability': record.get('churn_probability'),
-                'risk_level': record.get('risk_level'),
-                'top_factors': record.get('top_factors'),
-                'recommended_action': record.get('recommended_action'),
-                'timestamp': record.get('timestamp'),
-                'type': 'batch'
+                'id': record.get('id'),
+                'batch_id': record.get('batch_id'),
+                'customer_id': str(record.get('customer_id') or ''),
+                'probability': prob_val,
+                'churn_probability': prob_val,
+                'risk_level': str(record.get('risk_level') or 'Low'),
+                'prediction': pred_val,
+                'top_factors': top_factors_val,
+                'recommended_action': str(record.get('recommended_action') or ''),
+                'explanation': expl if expl else None,
+                'shap': shap_obj if isinstance(shap_obj, dict) else {},
+                'protective_factors': prot_obj if isinstance(prot_obj, list) else [],
+                'recommendations': recs_obj if isinstance(recs_obj, list) else [],
+                'input_features': input_feat if isinstance(input_feat, dict) else {},
+                'timestamp': str(record.get('timestamp') or ''),
+                'type': 'batch',
+                'explanation_status': str(status),
+                'has_explanation': bool(expl or (isinstance(shap_obj, dict) and (shap_obj.get('available') or shap_obj.get('features'))))
             })
         
         # Sort by timestamp descending
         all_records.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         
-        return {"history": all_records[:100]}  # Return top 100
+        return clean_json_val({"history": all_records[:100]})
     except Exception as e:
         import traceback
-        print(f"Error in get_history: {str(e)}")
-        print(traceback.format_exc())
+        logger.error(f"Error in get_history: {str(e)}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/dashboard/risk-queue")
